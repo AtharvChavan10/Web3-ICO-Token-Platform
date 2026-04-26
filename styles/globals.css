@@ -1,0 +1,631 @@
+@import url("../public/assets/css/bootstrap.min.css");
+@import url("../public/assets/css/fontawesome.css");
+@import url("../public/assets/css/animate.css");
+@import url("../public/assets/css/metisMenu.css");
+@import url("../public/assets/css/magnific-popup.css");
+@import url("../public/assets/css/main.css");
+
+.new-margin {
+  margin-top: 7rem;
+}
+
+.new-owner {
+  margin-top: 9rem;
+}
+/* ??LOADER */
+.custom-loader-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(1, 0, 0, 0.485);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 11;
+}
+
+.custom-loader {
+  border: 16px solid #25252538;
+  border-top: 16px solid #3c13d4;
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+/* END LOADER */
+
+/* KYC Modal */
+.kyc-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.kyc-content {
+  background: #0a0b1d;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #fff;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.kyc-content h2 {
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.kyc-content p {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1.4rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: rgba(60, 19, 212, 0.8);
+  box-shadow: 0 0 0 3px rgba(60, 19, 212, 0.2);
+}
+
+.kyc-preview {
+  margin-top: 0.6rem;
+  max-width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-primary {
+  background-color: #3c13d4;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #2a0fa3;
+}
+
+/* End KYC Modal */
+
+.kyc-fixed-btn {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 1100;
+  padding: 0.85rem 1.2rem;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #3c13d4, #12a8ff);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.kyc-fixed-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 46px rgba(0, 0, 0, 0.45);
+}
+
+.kyc-fixed-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+}
+
+
+.admin-fixed-btn:hover {
+  /* Keep position stable while still highlighting */
+  transform: translateX(-50%);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.4);
+}
+
+.admin-fixed-btn:active {
+  transform: translateX(-50%);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.35);
+}
+
+.header-admin-btn {
+  padding: 0.85rem 1.2rem;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.header-admin-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.4);
+}
+
+.header-admin-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.35);
+}
+
+.admin-login-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1200;
+}
+
+.admin-login-content {
+  background: #0a0b1d;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-login-content h2 {
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.admin-login-content p {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1.5rem;
+}
+
+.admin-login-content button {
+  margin: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.admin-login-content button:first-of-type {
+  background: #3c13d4;
+  color: white;
+}
+
+.admin-login-content button:first-of-type:hover {
+  background: #2a0fa3;
+}
+
+.admin-login-content button:last-of-type {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.admin-login-content button:last-of-type:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Popup (Buy Token Modal) */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.popup-header .title {
+  margin: 0;
+}
+
+.popup-close {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: background 150ms ease;
+}
+
+.popup-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.kyc-content h2 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.kyc-content p {
+  margin-bottom: 1.5rem;
+  color: #666;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.btn-primary {
+  background-color: #3c13d4;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #2a0fa3;
+}
+
+/* End KYC Modal */
+
+.ico-header .main-menu ul {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+.ico-header .main-menu ul li:not(:last-child) {
+  margin-right: 4px;
+}
+.ico-header .main-menu ul li a {
+  padding: 40px 18px;
+  box-sizing: content-box;
+}
+.ico-header .main-menu ul li a::before {
+  left: 50%;
+  transform: scaleY(0) translateX(-50%);
+  width: calc(100% - 8px);
+  max-width: 100%;
+}
+.ico-header .main-menu ul li:hover > a::before,
+.ico-header .main-menu ul li.active > a::before {
+  transform: scaleY(1) translateX(-50%);
+}
+
+/* Admin Dashboard Styles */
+.admin-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.admin-container h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #333;
+  font-size: 2.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  color: #3c13d4;
+  margin-bottom: 1rem;
+}
+
+.stat-card h3 {
+  margin-bottom: 0.5rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.stat-card p {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.admin-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.action-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.action-section h2 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.3rem;
+}
+
+.action-section p {
+  margin-bottom: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.action-section input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.action-section button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #3c13d4;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.action-section button:hover:not(:disabled) {
+  background: #2a0fa3;
+}
+
+.action-section button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Investor Dashboard */
+.investor-page {
+  padding: 4rem 0 2rem;
+  background: #07081a;
+  min-height: 100vh;
+}
+
+
+.investor-hero {
+  max-width: 960px;
+  margin: 0 auto;
+  margin-top: 70px;
+  padding: 2.5rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.investor-hero h1 {
+  font-size: 2.75rem;
+  color: #fff;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.investor-hero p {
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 720px;
+  margin: 0 auto 2rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.investor-account {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+}
+
+.investor-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 2.5rem;
+}
+
+.investor-stats .stat {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 1.2rem;
+  border-radius: 14px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.investor-stats .stat:hover {
+  transform: translateY(-3px);
+}
+
+.investor-stats .label {
+  display: block;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+
+.investor-stats .value {
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.investor-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  justify-items: center;
+}
+
+.investor-card {
+  background: rgba(0, 0, 0, 0.55);
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.investor-card h2 {
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.investor-card .form-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.investor-card input {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.investor-card button {
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.investor-card button:not(.secondary) {
+  background: linear-gradient(135deg, #3c13d4, #12a8ff);
+  color: #fff;
+}
+
+.investor-card button:not(.secondary):hover {
+  background: linear-gradient(135deg, #2a0fa3, #0c79d8);
+}
+
+.investor-card button.secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.investor-card button.secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
