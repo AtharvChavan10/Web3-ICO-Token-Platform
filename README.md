@@ -141,10 +141,8 @@ npx hardhat test
 ## 📸 Screenshots
 
 <img width="975" height="548" alt="image" src="https://github.com/user-attachments/assets/0cd787a8-a69e-4734-85d8-f268de6604e0" />
-
-<img width="975" height="548" alt="image" src="https://github.com/user-attachments/assets/1bed8365-55a9-4c25-9eb3-356d50b5124f" />
-
-<img width="975" height="548" alt="image" src="https://github.com/user-attachments/assets/c35750ed-96f3-4218-bb36-f39d10025a84" />
+<img width="975" height="553" alt="image" src="https://github.com/user-attachments/assets/8550e229-a2a4-4e16-9171-90d2e4688384" />
+<img width="975" height="520" alt="image" src="https://github.com/user-attachments/assets/0ddfe767-f6a6-491e-b1ff-ce62677850e0" />
 
 ---
 
