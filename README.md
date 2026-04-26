@@ -1,110 +1,189 @@
-# How to Build and Deploy Your Token Presale DApp (ICO) in 2024 - 2025
+# 🚀 Web3 ICO Token Platform
 
-How to Build and Deploy Your Token Presale DApp (ICO) in 2024 - 2025
+A full-stack **Web3 decentralized application (DApp)** that enables users to participate in an **Initial Coin Offering (ICO)** and purchase ERC-20 tokens securely using blockchain technology.
 
-In this comprehensive tutorial, we'll guide you through the process of building and deploying your very own Token Presale DApp (ICO) in 2024. Whether you're a seasoned developer or new to blockchain, this video covers everything you need to know to get your token presale up and running.
+This project demonstrates end-to-end development of a decentralized token sale platform including **smart contracts, wallet integration, and frontend UI**.
 
-🔍 In This Video:
+---
 
-- Introduction to ICOs and Token Presales - Understand the basics and importance of ICOs and how they help in raising funds for your project.
-- Setting Up Your Development Environment - Learn how to prepare your tools and environment for blockchain development.
-- Smart Contract Development - Step-by-step guide to writing, deploying, and verifying your ERC-20 token and presale contracts.
-- Creating the Frontend DApp - How to build a user-friendly interface for investors to participate in your token presale.
-- Integrating MetaMask and Wallets - Ensure seamless integration with MetaMask and other popular wallets.
-- Security Best Practices - Tips and best practices to secure your smart contracts and DApp.
-- Deploying Your ICO - Final steps to deploy your presale DApp and go live.
+## 📌 Features
 
-## Project Overview
+- 🔐 Decentralized ICO (Initial Coin Offering)
+- 💰 Buy ERC-20 tokens using ETH
+- 🌐 Wallet connection via Web3Modal / MetaMask
+- ⚡ Fast and responsive UI (React + Tailwind CSS)
+- 📊 Real-time transaction updates
+- 🔄 Secure and transparent blockchain transactions
+- 🧠 Input validation and error handling
 
-![alt text](https://www.daulathussain.com/wp-content/uploads/2024/05/Build-and-deploy-token-presale-ico-dapp.png)
+---
 
-Kindly follow the following Instructions to run the project in your system and install the necessary requirements
+## 🧱 Tech Stack
 
-- [Final Source Code](https://www.theblockchaincoders.com/sourceCode/build-and-deploy-a-crypto-airdrop-token-dapp-using-nextjs-solidity-metamass-and-smart-contract-2024)
+### 🖥 Frontend
+- React.js
+- Tailwind CSS
+- Chart.js
+- Ethers.js
 
-#### Setup Video
+### 🔗 Blockchain
+- Solidity (Smart Contracts)
+- Hardhat (Development & Testing)
+- Web3Modal (Wallet Integration)
 
-- [Final Code Setup video](https://youtu.be/rtDfE8R9Yxk)
+### 🌐 Network
+- Ethereum (Testnet: Goerli / Sepolia)
 
-```https://code.visualstudio.com/download
-  WATCH: Setup & Demo Of Project
-```
+---
 
-#### Install Vs Code Editor
+## 📁 Project Structure
 
-```https://code.visualstudio.com/download
-  GET: VsCode Editor
-```
+Web3-ICO-Token-Platform/
+│
+├── client/                  # Frontend (React)
+│   ├── components/
+│   ├── pages/
+│   ├── context/
+│   └── utils/
+│
+├── smart-contracts/         # Smart Contracts
+│   ├── contracts/
+│   ├── scripts/
+│   ├── test/
+│   └── hardhat.config.js
+│
+├── .gitignore
+├── package.json
+└── README.md
 
-#### NodeJs & NPM Version
+---
 
-```https://nodejs.org/en/download
-  NodeJs: v18.12.1
-  NPM: 8.19.2
-```
+## ⚙️ Smart Contracts
 
-#### Clone Starter File
+### 🔹 ERC-20 Token Contract
+- Custom token implementation
+- Token minting and supply control
 
-```https://github.com/daulathussain/Airdrop-Crypto-Starter-File
-  GET: Project Starter File Download
-```
+### 🔹 ICO Contract
+- Manages token sale logic
+- Accepts ETH payments
+- Automatically transfers tokens to buyers
 
-All you need to follow the complete project and follow the instructions which are explained in the tutorial by Daulat
+---
 
-## Final Code Instruction
+## 🔗 Deployment (Update after deploying)
 
-If you download the final source code then you can follow the following instructions to run the Dapp successfully
+- 🪙 Token Contract:  
+  https://etherscan.io/address/YOUR_TOKEN_ADDRESS
 
-#### What You Will Get
+- 💼 ICO Contract:  
+  https://etherscan.io/address/YOUR_ICO_ADDRESS
 
-Once you download the final source code, you will get a ZIP file, then you will have 2 FOLDERS & README file which contain all the instructions to run the project and set video
+---
 
-#### Setup Video
+## 🚀 Getting Started
 
-```https://code.visualstudio.com/download
-  WATCH: Setup & Demo Of Project
-```
+### 1️⃣ Clone the Repository
 
-#### Final Source Code
+git clone https://github.com/AtharvChavan10/Web3-ICO-Token-Platform.git  
+cd Web3-ICO-Token-Platform
 
-```https://www.theblockchaincoders.com/SourceCode
-  Download the Final Source Code
-```
+---
 
-#### Install Vs Code Editor
+### 2️⃣ Install Frontend Dependencies
 
-```https://code.visualstudio.com/download
-  GET: VsCode Editor
-```
+cd client  
+npm install  
 
-#### NodeJs & NPM Version
+---
 
-```https://nodejs.org/en/download
-  NodeJs: v18.12.1
-  NPM: 8.19.2
-```
+### 3️⃣ Run Frontend
 
-#### Test Faucets
+npm start  
 
-Alchemy will provide you with some free test faucets which you can transfer to your wallet address for deploying the contract
+---
 
-```https://faucet.polygon.technology/
-  Get: Free Test Faucets
-  URL : https://faucet.polygon.technology/
-```
+### 4️⃣ Setup Smart Contracts
 
-#### RemixID
+cd smart-contracts  
+npm install  
+npx hardhat compile  
+npx hardhat run scripts/deploy.js --network goerli  
 
-We are using RemixID for deploying the contract and generation of the ABI in the project, but you can use any other tools like Hardhat, etc.
+---
 
-```https://remix-project.org
-  OPEN: RemixID
-  URL: https://remix-project.org
-```
+## 🔐 Environment Variables
 
-#### Polygon Mumbai
+Create a `.env` file inside `smart-contracts/`:
 
-```https://amoy.polygonscan.com/
-  OPEN: Polygon Amoy
-  URL: https://amoy.polygonscan.com/
-```
+PRIVATE_KEY=your_wallet_private_key  
+RPC_URL=your_rpc_provider_url  
+
+---
+
+## 🧪 Testing
+
+npx hardhat test  
+
+---
+
+## 📊 How It Works
+
+1. User connects wallet (MetaMask)  
+2. Frontend connects to blockchain using Ethers.js  
+3. User enters ETH amount  
+4. Smart contract calculates token amount  
+5. Tokens are transferred instantly  
+6. Transaction stored on blockchain  
+
+---
+
+## 📸 Screenshots
+
+Add screenshots of your UI here
+
+---
+
+## 🎯 Use Cases
+
+- Blockchain startup fundraising  
+- Token launch platforms  
+- Learning Web3 full-stack development  
+
+---
+
+## ⚠️ Disclaimer
+
+This project is for **educational purposes only**.  
+Do not use in production without proper security audits.
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository  
+2. Create a new branch  
+3. Commit your changes  
+4. Open a pull request  
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+## 👨‍💻 Authors
+
+Atharv Chavan
+Aaditya Yadav
+Nikhil Parande
+Chaitanya Naik
+Blockchain Developers 🚀  
+
+---
+
+## ⭐ Support
+
+If you like this project, give it a ⭐ on GitHub!
