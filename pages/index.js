@@ -62,8 +62,33 @@ const index = () => {
   const [openUpdatePrice, setOpenUpdatePrice] = useState(false);
   const [openUpdateAddress, setOpenUpdateAddress] = useState(false);
   const [kycModel, setKycModel] = useState(false);
-  const [adminModal, setAdminModal] = useState(false);
   const [detail, setDetail] = useState();
+
+  const closeAllModals = () => {
+    setOwnerModel(false);
+    setBuyModel(false);
+    setTransferModel(false);
+    setTransferCurrency(false);
+    setOpenDonate(false);
+    setOpenUpdatePrice(false);
+    setOpenUpdateAddress(false);
+    setKycModel(false);
+  };
+
+  const openTools = () => {
+    // If tools is already open, close it. Otherwise ensure only tools is open.
+    if (ownerModel) {
+      setOwnerModel(false);
+      return;
+    }
+    closeAllModals();
+    setOwnerModel(true);
+  };
+
+  const backToTools = () => {
+    closeAllModals();
+    setOwnerModel(true);
+  };
 
   const openKyc = () => {
     if (!account) {
@@ -75,14 +100,30 @@ const index = () => {
   };
 
   const openAdmin = () => {
-    setAdminModal(true);
+    window.location.href = "/admin";
   };
   useEffect(() => {
+    let cancelled = false;
+
     const fetchData = async () => {
-      const items = await TOKEN_ICO();
-      setDetail(items);
+      // TOKEN_ICO() may return undefined briefly while clients initialize.
+      // Retry a few times so UI doesn't get stuck on "Loading...".
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const items = await TOKEN_ICO({ showLoader: false, toastOnError: false });
+        if (cancelled) return;
+        if (items) {
+          setDetail(items);
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 750));
+      }
     };
+
     fetchData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [account]);
 
   return (
@@ -122,6 +163,7 @@ const index = () => {
             TRANSFER_TOKEN={TRANSFER_TOKEN}
             ERC20={ERC20}
             setLoader={setLoader}
+            onBack={backToTools}
           />
         )}
 
@@ -133,6 +175,7 @@ const index = () => {
             currency={currency}
             CHECK_ACCOUNT_BALANCE={CHECK_ACCOUNT_BALANCE}
             setLoader={setLoader}
+            onBack={backToTools}
           />
         )}
 
@@ -142,6 +185,7 @@ const index = () => {
             currency={currency}
             setOpenDonate={setOpenDonate}
             DONATE={DONATE}
+            onBack={backToTools}
           />
         )}
 
@@ -151,6 +195,7 @@ const index = () => {
             currency={currency}
             setOpenUpdatePrice={setOpenUpdatePrice}
             UPDATE_TOKEN_PRICE={UPDATE_TOKEN_PRICE}
+            onBack={backToTools}
           />
         )}
 
@@ -162,6 +207,7 @@ const index = () => {
             UPDATE_TOKEN={UPDATE_TOKEN}
             ERC20={ERC20}
             setLoader={setLoader}
+            onBack={backToTools}
           />
         )}
 
@@ -171,31 +217,6 @@ const index = () => {
             setKycVerified={setKycVerified}
             setKycModel={setKycModel}
           />
-        )}
-
-        {adminModal && (
-          <div className="admin-login-modal">
-            <div className="admin-login-content">
-              <h2>Admin Access</h2>
-              {!account ? (
-                <div>
-                  <p>Please connect your wallet to access admin features.</p>
-                  <button onClick={() => setAdminModal(false)}>Close</button>
-                </div>
-              ) : detail && account.toLowerCase() === detail.owner ? (
-                <div>
-                  <p>Welcome, Admin! You have access to the dashboard.</p>
-                  <button onClick={() => { setAdminModal(false); window.location.href = '/admin'; }}>Go to Dashboard</button>
-                  <button onClick={() => setAdminModal(false)}>Cancel</button>
-                </div>
-              ) : (
-                <div>
-                  <p>Access Denied: Only the contract owner can access admin features.</p>
-                  <button onClick={() => setAdminModal(false)}>Close</button>
-                </div>
-              )}
-            </div>
-          </div>
         )}
 
         {loader && <Loader />}
@@ -213,9 +234,10 @@ const index = () => {
           kycVerified={kycVerified}
           setKycModel={setKycModel}
           openAdmin={openAdmin}
+          openTools={openTools}
         />
         {/* <Profile /> */}
-        <SideBar setOwnerModel={setOwnerModel} ownerModel={ownerModel} />
+        <SideBar setOwnerModel={setOwnerModel} ownerModel={ownerModel} openTools={openTools} />
         <Hero
           setBuyModel={setBuyModel}
           account={account}

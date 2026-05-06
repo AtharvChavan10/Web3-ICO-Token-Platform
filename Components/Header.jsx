@@ -8,10 +8,13 @@ const Header = ({
   detail,
   currency,
   openAdmin,
+  openTools,
+  isAdmin,
 }) => {
+  const headerClass = `site-header ico-header ${isAdmin ? "admin-page-header" : "header--transparent"}`;
 
   return (
-    <header className="site-header header--transparent ico-header">
+    <header className={headerClass}>
       <div className="header__main-wrap">
         <div className="container mxw_1640">
           <div className="header__main ul_li_between">
@@ -49,7 +52,7 @@ const Header = ({
                       <a
                         className="scrollspy-btn"
                         style={{ cursor: "pointer" }}
-                        onClick={() => setOwnerModel(!ownerModel)}
+                        onClick={openTools ?? (() => setOwnerModel(!ownerModel))}
                       >
                         Tools
                       </a>

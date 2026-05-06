@@ -5,6 +5,7 @@ const TransferToken = ({
   TRANSFER_TOKEN,
   ERC20,
   setLoader,
+  onBack,
 }) => {
   const [token, setToken] = useState({
     _sendTo: "",
@@ -35,10 +36,24 @@ const TransferToken = ({
     <section className="new-margin ico-contact pos-rel">
       <div className="container">
         <div className="ico-contact__wrap">
-          <h2 className="title">
-            Transfer Token{" "}
-            <strong onClick={() => setTransferModel(false)}>X</strong>
-          </h2>
+          <div className="popup-header">
+            <button
+              type="button"
+              className="popup-back"
+              onClick={() => (typeof onBack === "function" ? onBack() : setTransferModel(false))}
+            >
+              ← Back
+            </button>
+            <h2 className="title">Transfer Token</h2>
+            <button
+              type="button"
+              className="popup-close"
+              onClick={() => setTransferModel(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
 
           <div>
             <div className="row">

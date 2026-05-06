@@ -16,7 +16,21 @@ const Owner = ({
   return (
     <section className="team pos-rel ">
       <div className="container">
-        <div className="new-owner team__wrap ul_li">
+        <div className="ico-contact__wrap new-owner">
+          <div className="popup-header">
+            <div />
+            <h2 className="title">Tools</h2>
+            <button
+              type="button"
+              className="popup-close"
+              onClick={() => setOwnerModel(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="team__wrap ul_li tools-grid">
           <div className="team__item">
             <div className="avatar">
               <img src="assets/img/shape/c_shape1.png" alt="" />
@@ -164,6 +178,7 @@ const Owner = ({
               </div>
             </>
           )}
+          </div>
         </div>
       </div>
 

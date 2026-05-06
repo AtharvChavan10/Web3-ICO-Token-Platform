@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { shortenAddress } from "../Utils/index";
 
 const Popup = ({
@@ -12,20 +13,77 @@ const Popup = ({
   setLoader,
 }) => {
   const [amount, setAmount] = useState();
-  const [transferToken, setTransferToken] = useState();
-
-  useEffect(() => {
-    setLoader(true);
-    ERC20(TOKEN_ADDRESS).then((items) => {
-      setTransferToken(items);
-      console.log(items);
-      setLoader(false);
-    });
-  }, []);
+  const [internetPrice, setInternetPrice] = useState(null);
 
   const amountNumber = Number(amount) || 0;
-  const priceNumber = Number(detail?.tokenPrice) || 0;
-  const outputValue = (amountNumber * priceNumber).toFixed(6);
+  const priceNumber = Number(detail?.tokenPrice);
+  const hasPrice = Number.isFinite(priceNumber);
+  const walletBalance = Number(detail?.maticBal) || 0;
+  const tokenAddr = detail?.tokenAddr || TOKEN_ADDRESS || "-";
+  const availableTokens = Number(detail?.tokenBal) || 0;
+  const totalCost = hasPrice ? amountNumber * priceNumber : 0;
+  const isInsufficientAmount = amountNumber <= 0;
+  const isInsufficientFunds = amountNumber > 0 && totalCost > walletBalance;
+  const internetPriceLabel = internetPrice
+    ? Number(internetPrice).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : null;
+
+  const handleBuyClick = () => {
+    if (!account) {
+      toast.error("Connect your wallet to buy tokens.");
+      return;
+    }
+
+    if (!hasPrice) {
+      toast.error("Token price is not available yet. Please wait a moment.");
+      return;
+    }
+
+    if (isInsufficientAmount) {
+      toast.error("Enter a valid token amount to purchase.");
+      return;
+    }
+
+    if (amountNumber > availableTokens) {
+      toast.error(
+        `Only ${availableTokens} token(s) are available. Reduce your amount.`
+      );
+      return;
+    }
+
+    if (isInsufficientFunds) {
+      toast.error("Insufficient wallet funds for this purchase.");
+      return;
+    }
+
+    BUY_TOKEN(amount);
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchInternetPrice = async () => {
+      try {
+        const response = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+        );
+        const data = await response.json();
+        if (!mounted) return;
+        setInternetPrice(data?.ethereum?.usd ?? null);
+      } catch (error) {
+        console.log("Internet price fetch failed:", error);
+      }
+    };
+
+    fetchInternetPrice();
+    const interval = setInterval(fetchInternetPrice, 10000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <section className="new-margin ico-contact pos-rel">
@@ -45,14 +103,20 @@ const Popup = ({
                   type="number"
                   min="0"
                   value={amount ?? ""}
-                  placeholder={`Token Balance: ${transferToken?.balance ?? "0"} ${transferToken?.symbol ?? ""}`}
+                  placeholder={`Available Tokens: ${availableTokens ?? "0"} ${
+                    detail?.symbol ?? ""
+                  }`}
                   onChange={(e) => setAmount(e.target.value)}
                 />
               </div>
               <div className="col-lg-6">
                 <input
                   type="text"
-                  value={`${outputValue} ${currency}`}
+                  value={
+                    internetPriceLabel
+                      ? `ETH live: $${internetPriceLabel}`
+                      : "Fetching ETH live price..."
+                  }
                   readOnly
                 />
               </div>
@@ -63,13 +127,28 @@ const Popup = ({
                   name="message"
                   cols="30"
                   rows="10"
-                  value={`Current Price: ${priceNumber || 0} ${currency}\nToken Address: ${detail?.tokenAddr ?? "-"}\nYour Balance: ${detail?.tokenBal ?? "0"} ${detail?.symbol ?? ""}`}
+                  value={`Current Token Price: ${
+                    hasPrice ? priceNumber : "N/A"
+                  } ${currency}${
+                    internetPriceLabel ? `  |  ETH live: $${internetPriceLabel}` : ""
+                  }\nToken Address: ${tokenAddr}${
+                    tokenAddr && tokenAddr !== "-" ? ` (${shortenAddress(tokenAddr)})` : ""
+                  }\nAvailable Tokens: ${availableTokens} ${
+                    detail?.symbol ?? ""
+                  }\nYour Wallet Balance: ${
+                    account ? `${detail?.maticBal ?? "0"} ${currency}` : "Connect wallet"
+                  }`}
                 ></textarea>
               </div>
 
               <div className="ico-contract__btn text-center mt-10">
-                <button onClick={() => BUY_TOKEN(amount)} className="thm-btn">
-                  Buy Token
+                {isInsufficientFunds && (
+                  <p style={{ color: "#ff6b6b", marginBottom: 10 }}>
+                    Insufficient wallet funds for this purchase.
+                  </p>
+                )}
+                <button onClick={handleBuyClick} className="thm-btn">
+                  {account ? "Buy Token" : "Connect wallet to buy"}
                 </button>
               </div>
             </div>

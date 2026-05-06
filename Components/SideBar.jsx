@@ -1,6 +1,6 @@
 import React from "react";
 
-const SideBar = ({ setOwnerModel, ownerModel }) => {
+const SideBar = ({ setOwnerModel, ownerModel, openTools }) => {
   return (
     <aside className="slide-bar">
       <div className="close-mobile-menu">
@@ -50,9 +50,7 @@ const SideBar = ({ setOwnerModel, ownerModel }) => {
               style={{
                 cursor: "pointer",
               }}
-              onClick={() =>
-                ownerModel ? setOwnerModel(false) : setOwnerModel(true)
-              }
+              onClick={openTools ?? (() => (ownerModel ? setOwnerModel(false) : setOwnerModel(true)))}
             >
               Tools
             </a>

@@ -17,15 +17,34 @@ const Investor = () => {
   const [detail, setDetail] = useState(null);
   const [amount, setAmount] = useState(1);
   const [kycModel, setKycModel] = useState(false);
+  const [liveEthPrice, setLiveEthPrice] = useState(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
-      const data = await TOKEN_ICO();
+      const data = await TOKEN_ICO({ showLoader: false, toastOnError: false });
       setDetail(data);
     };
 
     if (account) fetchDetails();
   }, [account]);
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const response = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+        );
+        const data = await response.json();
+        setLiveEthPrice(data?.ethereum?.usd ?? null);
+      } catch (error) {
+        console.log("Failed to fetch ETH price:", error);
+      }
+    };
+
+    fetchPrice();
+    const interval = setInterval(fetchPrice, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleBuy = async () => {
     if (!account) {
@@ -82,6 +101,20 @@ const Investor = () => {
                     <span className="value">{detail.tokenPrice ?? 0} ETH</span>
                   </div>
                   <div className="stat">
+                    <span className="label">Live ETH Price</span>
+                    <span className="value">
+                      {liveEthPrice ? `$${liveEthPrice.toFixed(2)}` : "Loading..."}
+                    </span>
+                  </div>
+                  <div className="stat">
+                    <span className="label">Holdings Value</span>
+                    <span className="value">
+                      {liveEthPrice
+                        ? `$${(Number(detail.tokenBal) * Number(detail.tokenPrice) * liveEthPrice).toFixed(2)}`
+                        : "Loading..."}
+                    </span>
+                  </div>
+                  <div className="stat">
                     <span className="label">KYC Status</span>
                     <span className="value">
                       {kycVerified ? "Verified" : "Not Verified"}
@@ -104,6 +137,10 @@ const Investor = () => {
                       Buy
                     </button>
                   </div>
+                  <p className="estimate">
+                    Estimated cost: {detail ? (amount * Number(detail.tokenPrice)).toFixed(4) : "0.0000"} ETH
+                    {detail && liveEthPrice ? ` ($${(amount * Number(detail.tokenPrice) * liveEthPrice).toFixed(2)})` : ""}
+                  </p>
                   <button
                     className="secondary"
                     onClick={() => setKycModel(true)}

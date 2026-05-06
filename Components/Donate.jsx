@@ -1,16 +1,32 @@
 import React, { useState, useEffect } from "react";
 
-const Donate = ({ detail, currency, setOpenDonate, DONATE }) => {
+const Donate = ({ detail, currency, setOpenDonate, DONATE, onBack }) => {
   const [donateFund, setDonateFund] = useState();
 
   return (
     <section className="new-margin ico-contact pos-rel">
       <div className="container">
         <div className="ico-contact__wrap">
-          <h2 className="title">
-            Donate {currency}
-            <strong onClick={() => setOpenDonate(false)}>X</strong>
-          </h2>
+          <div className="popup-header">
+            <button
+              type="button"
+              className="popup-back"
+              onClick={() =>
+                typeof onBack === "function" ? onBack() : setOpenDonate(false)
+              }
+            >
+              ← Back
+            </button>
+            <h2 className="title">Donate {currency}</h2>
+            <button
+              type="button"
+              className="popup-close"
+              onClick={() => setOpenDonate(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
 
           <div>
             <div className="row">

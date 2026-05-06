@@ -70,41 +70,69 @@ export const TOKEN_ICO_Provider = ({ children }) => {
   };
 
   //--- CONTRACT FUNCTION ---
-  const TOKEN_ICO = async () => {
+  const TOKEN_ICO = async (options = {}) => {
+    const { showLoader = true, toastOnError = true } = options;
     try {
-      if (!isConnected || !address || !contract) {
-        console.log("Wallet not connected");
-        return;
+      if (showLoader) setLoader(true);
+      // Read token details even without a connected wallet (public RPC).
+      let tokenDetails;
+      let contractOwner;
+      let soldTokens;
+
+      if (contract) {
+        tokenDetails = await contract.getTokenDetails();
+        contractOwner = await contract.owner();
+        soldTokens = await contract.soldTokens();
+      } else if (publicClient) {
+        tokenDetails = await publicClient.readContract({
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: "getTokenDetails",
+        });
+        contractOwner = await publicClient.readContract({
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: "owner",
+        });
+        soldTokens = await publicClient.readContract({
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: "soldTokens",
+        });
+      } else {
+        if (showLoader) setLoader(false);
+        return null;
       }
 
-      setLoader(true);
-
-      const tokenDetails = await contract.getTokenDetails();
-      const contractOwner = await contract.owner();
-      const soldTokens = await contract.soldTokens();
-
-      const ethBal = await GET_BALANCE();
+      const ethBal =
+        address && publicClient
+          ? ethers.utils.formatEther(
+              (await publicClient.getBalance({ address })).toString()
+            )
+          : "0";
 
       const token = {
         tokenBal: ethers.utils.formatEther(tokenDetails.balance.toString()),
         name: tokenDetails.name,
         symbol: tokenDetails.symbol,
         supply: ethers.utils.formatEther(tokenDetails.supply.toString()),
-        tokenPrice: ethers.utils.formatEther(
-          tokenDetails.tokenPrice.toString()
-        ),
+        tokenPrice: ethers.utils.formatEther(tokenDetails.tokenPrice.toString()),
         tokenAddr: tokenDetails.tokenAddr,
         maticBal: ethBal,
-        address: address.toLowerCase(),
-        owner: contractOwner.toLowerCase(),
-        soldTokens: soldTokens.toNumber(),
+        address: address ? address.toLowerCase() : undefined,
+        owner: contractOwner ? contractOwner.toLowerCase() : undefined,
+        soldTokens:
+          typeof soldTokens?.toNumber === "function"
+            ? soldTokens.toNumber()
+            : Number(soldTokens ?? 0),
       };
-      setLoader(false);
+      if (showLoader) setLoader(false);
       return token;
     } catch (error) {
       console.log(error);
-      notifyError("error try again later");
-      setLoader(false);
+      if (toastOnError) notifyError("error try again later");
+      if (showLoader) setLoader(false);
+      return null;
     }
   };
 
@@ -162,9 +190,7 @@ export const TOKEN_ICO_Provider = ({ children }) => {
       const balanceBn = ethers.utils.parseUnits(balance.toString(), "ether");
 
       if (balanceBn.lt(payAmount)) {
-        notifyError(
-          "Insufficient ETH balance. Please fund your wallet to complete the purchase."
-        );
+        notifyError("Invalid transaction: insufficient wallet funds.");
         setLoader(false);
         return;
       }
@@ -190,11 +216,11 @@ export const TOKEN_ICO_Provider = ({ children }) => {
       const isInsufficientFunds = /insufficient funds/i.test(errorMsg);
 
       if (isInsufficientFunds) {
-        notifyError(
-          "Insufficient ETH balance. Please fund your wallet to complete the purchase."
-        );
+        notifyError("Invalid transaction: insufficient wallet funds.");
       } else {
-        notifyError(errorMsg);
+        notifyError(
+          "Invalid transaction. Please check your wallet balance and try again."
+        );
       }
 
       setLoader(false);

@@ -7,6 +7,7 @@ const TransferCurrency = ({
   currency,
   CHECK_ACCOUNT_BALANCE,
   setLoader,
+  onBack,
 }) => {
   const [transfer, setTransfer] = useState({
     _amount: "",
@@ -36,10 +37,26 @@ const TransferCurrency = ({
     <section className="new-margin ico-contact pos-rel">
       <div className="container">
         <div className="ico-contact__wrap">
-          <h2 className="title">
-            Transfer {currency}
-            <strong onClick={() => setTransferCurrency(false)}>X</strong>
-          </h2>
+          <div className="popup-header">
+            <button
+              type="button"
+              className="popup-back"
+              onClick={() =>
+                typeof onBack === "function" ? onBack() : setTransferCurrency(false)
+              }
+            >
+              ← Back
+            </button>
+            <h2 className="title">Transfer {currency}</h2>
+            <button
+              type="button"
+              className="popup-close"
+              onClick={() => setTransferCurrency(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
 
           <div>
             <div className="row">

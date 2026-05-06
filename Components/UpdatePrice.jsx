@@ -5,6 +5,7 @@ const UpdatePrice = ({
   currency,
   setOpenUpdatePrice,
   UPDATE_TOKEN_PRICE,
+  onBack,
 }) => {
   const [price, setPrice] = useState();
 
@@ -12,10 +13,26 @@ const UpdatePrice = ({
     <section className="new-margin ico-contact pos-rel">
       <div className="container">
         <div className="ico-contact__wrap">
-          <h2 className="title">
-            Update Token Price
-            <strong onClick={() => setOpenUpdatePrice(false)}>X</strong>
-          </h2>
+          <div className="popup-header">
+            <button
+              type="button"
+              className="popup-back"
+              onClick={() =>
+                typeof onBack === "function" ? onBack() : setOpenUpdatePrice(false)
+              }
+            >
+              ← Back
+            </button>
+            <h2 className="title">Update Token Price</h2>
+            <button
+              type="button"
+              className="popup-close"
+              onClick={() => setOpenUpdatePrice(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
 
           <div>
             <div className="row">

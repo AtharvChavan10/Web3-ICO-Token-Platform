@@ -22,24 +22,31 @@ const Hero = ({
   };
 
   const [percentage, setPercentage] = useState(0);
+  const [animatedSold, setAnimatedSold] = useState(0);
+  const [animatedTotal, setAnimatedTotal] = useState(0);
 
   useEffect(() => {
-    const calculatePercentage = () => {
-      const tokenSold = detail?.soldTokens ?? 0;
-      const tokenTotalSupply =
-        detail?.soldTokens + Number(detail?.tokenBal) * 1 ?? 1;
+    const sold = Number(detail?.soldTokens) || 0;
+    const available = Number(detail?.tokenBal || 0) || 0;
+    const total = sold + available;
+    const percentageNew = total ? (sold / total) * 100 : 0;
 
-      const percentageNew = (tokenSold / tokenTotalSupply) * 100;
+    setPercentage(percentageNew);
 
-      if (tokenTotalSupply === 0) {
-        console.log("Token sale balance is zero, cannot calculate percentage");
-      } else {
-        setPercentage(percentageNew);
-      }
+    const animateValue = (from, to, setter, duration = 800) => {
+      const start = performance.now();
+      const step = (timestamp) => {
+        const progress = Math.min((timestamp - start) / duration, 1);
+        setter(Math.round(from + (to - from) * progress));
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        }
+      };
+      requestAnimationFrame(step);
     };
-    const timer = setTimeout(calculatePercentage, 1000);
 
-    return () => clearTimeout(timer);
+    animateValue(animatedSold, sold, setAnimatedSold);
+    animateValue(animatedTotal, total, setAnimatedTotal);
   }, [detail]);
 
   const ADD_TOKEN_METAMASK = async () => {
@@ -97,12 +104,11 @@ const Hero = ({
               <div className="hero__progress mt-50">
                 <div className="progress-title ul_li_between">
                   <span>
-                    <span>Raised -</span> {detail?.soldTokens} Tokens
+                    <span>Raised -</span> {animatedSold} Tokens
                   </span>
                   <span>
                     <span>Total ICO -</span>{" "}
-                    {detail?.soldTokens + Number(detail?.tokenBal)}{" "}
-                    {detail?.symbol}
+                    {animatedTotal} {detail?.symbol}
                   </span>
                 </div>
 

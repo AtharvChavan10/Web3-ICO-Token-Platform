@@ -8,6 +8,7 @@ const UpdateAddress = ({
   UPDATE_TOKEN,
   ERC20,
   setLoader,
+  onBack,
 }) => {
   const [address, setAddress] = useState();
 
@@ -35,10 +36,26 @@ const UpdateAddress = ({
     <section className="new-margin ico-contact pos-rel">
       <div className="container">
         <div className="ico-contact__wrap">
-          <h2 className="title">
-            Update Token
-            <strong onClick={() => setOpenUpdateAddress(false)}>X</strong>
-          </h2>
+          <div className="popup-header">
+            <button
+              type="button"
+              className="popup-back"
+              onClick={() =>
+                typeof onBack === "function" ? onBack() : setOpenUpdateAddress(false)
+              }
+            >
+              ← Back
+            </button>
+            <h2 className="title">Update Token</h2>
+            <button
+              type="button"
+              className="popup-close"
+              onClick={() => setOpenUpdateAddress(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
 
           <div>
             <div className="row">
