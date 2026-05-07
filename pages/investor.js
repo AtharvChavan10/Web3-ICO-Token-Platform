@@ -12,12 +12,15 @@ const Investor = () => {
     kycVerified,
     setKycVerified,
     loader,
+    addtokenToMetaMask,
+    CHECK_ACCOUNT_BALANCE,
   } = useContext(TOKEN_ICO_Context);
 
   const [detail, setDetail] = useState(null);
   const [amount, setAmount] = useState(1);
   const [kycModel, setKycModel] = useState(false);
   const [liveEthPrice, setLiveEthPrice] = useState(null);
+  const [walletBalance, setWalletBalance] = useState(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -46,6 +49,58 @@ const Investor = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      if (!account) {
+        setWalletBalance(null);
+        return;
+      }
+      try {
+        const balance = await CHECK_ACCOUNT_BALANCE(account);
+        setWalletBalance(balance ? Number(balance) : 0);
+      } catch (error) {
+        console.log("Failed to load wallet balance:", error);
+      }
+    };
+
+    fetchWalletBalance();
+  }, [account, CHECK_ACCOUNT_BALANCE]);
+
+  const handleBuyMax = () => {
+    if (!detail || !detail.tokenPrice) {
+      toast.error("Token price is unavailable.");
+      return;
+    }
+    const price = Number(detail.tokenPrice);
+    const available = Number(detail.tokenBal || 0);
+    const balance = Number(walletBalance || 0);
+    if (!price || price <= 0) {
+      toast.error("Unable to calculate max purchase.");
+      return;
+    }
+    const maxByFunds = Math.floor(balance / price);
+    const maxAmount = Math.min(maxByFunds, available);
+    if (maxAmount <= 0) {
+      toast.error("Not enough funds or available tokens to buy.");
+      return;
+    }
+    setAmount(maxAmount);
+    toast.success(`Max buy amount set to ${maxAmount}`);
+  };
+
+  const handleAddToken = async () => {
+    try {
+      const result = await addtokenToMetaMask();
+      if (result?.toLowerCase().includes("added")) {
+        toast.success("Token added to your wallet.");
+      } else {
+        toast.error(result || "Unable to add token to wallet.");
+      }
+    } catch (error) {
+      toast.error("Unable to add token to wallet.");
+    }
+  };
+
   const handleBuy = async () => {
     if (!account) {
       toast.error("Connect your wallet first");
@@ -64,6 +119,14 @@ const Investor = () => {
 
     await BUY_TOKEN(amount);
   };
+
+  const availableTokens = Number(detail?.tokenBal || 0);
+  const totalSupply = Number(detail?.supply || 0);
+  const soldTokens = Number(detail?.soldTokens || 0);
+  const soldPercentage = totalSupply ? ((soldTokens / totalSupply) * 100).toFixed(2) : 0;
+  const estimatedCost = detail ? (amount * Number(detail.tokenPrice)).toFixed(4) : "0.0000";
+  const priceUsd = liveEthPrice ? (Number(detail?.tokenPrice || 0) * liveEthPrice).toFixed(2) : "Loading...";
+  const holdingsValue = detail && liveEthPrice ? `$${(Number(detail.tokenBal) * Number(detail.tokenPrice) * liveEthPrice).toFixed(2)}` : "Loading...";
 
   return (
     <>
@@ -97,22 +160,28 @@ const Investor = () => {
                     <span className="value">{detail.soldTokens}</span>
                   </div>
                   <div className="stat">
+                    <span className="label">Available Tokens</span>
+                    <span className="value">{availableTokens}</span>
+                  </div>
+                  <div className="stat">
+                    <span className="label">Sale Completion</span>
+                    <span className="value">{soldPercentage}%</span>
+                  </div>
+                  <div className="stat">
                     <span className="label">Token Price</span>
                     <span className="value">{detail.tokenPrice ?? 0} ETH</span>
                   </div>
                   <div className="stat">
-                    <span className="label">Live ETH Price</span>
-                    <span className="value">
-                      {liveEthPrice ? `$${liveEthPrice.toFixed(2)}` : "Loading..."}
-                    </span>
+                    <span className="label">USD Price</span>
+                    <span className="value">{priceUsd}</span>
+                  </div>
+                  <div className="stat">
+                    <span className="label">Wallet Balance</span>
+                    <span className="value">{walletBalance !== null ? `${walletBalance.toFixed(4)} ETH` : "Loading..."}</span>
                   </div>
                   <div className="stat">
                     <span className="label">Holdings Value</span>
-                    <span className="value">
-                      {liveEthPrice
-                        ? `$${(Number(detail.tokenBal) * Number(detail.tokenPrice) * liveEthPrice).toFixed(2)}`
-                        : "Loading..."}
-                    </span>
+                    <span className="value">{holdingsValue}</span>
                   </div>
                   <div className="stat">
                     <span className="label">KYC Status</span>
@@ -123,9 +192,24 @@ const Investor = () => {
                 </div>
               )}
 
+              {detail && (
+                <div className="investor-progress">
+                  <div className="progress-label">
+                    <span>Sale progress</span>
+                    <span>{soldPercentage}%</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: `${soldPercentage}%` }} />
+                  </div>
+                </div>
+              )}
+
               <div className="investor-actions">
                 <div className="investor-card">
                   <h2>Buy Tokens</h2>
+                  <p className="card-description">
+                    Buy directly from the ICO contract after completing your KYC verification.
+                  </p>
                   <div className="form-row">
                     <input
                       type="number"
@@ -137,9 +221,17 @@ const Investor = () => {
                       Buy
                     </button>
                   </div>
+                  <div className="form-row small">
+                    <button className="secondary" onClick={handleBuyMax} disabled={!detail || loader}>
+                      Buy Max
+                    </button>
+                    <button className="secondary" onClick={handleAddToken}>
+                      Add Token to Wallet
+                    </button>
+                  </div>
                   <p className="estimate">
-                    Estimated cost: {detail ? (amount * Number(detail.tokenPrice)).toFixed(4) : "0.0000"} ETH
-                    {detail && liveEthPrice ? ` ($${(amount * Number(detail.tokenPrice) * liveEthPrice).toFixed(2)})` : ""}
+                    Estimated cost: {estimatedCost} ETH
+                    {detail && liveEthPrice ? ` ($${(Number(estimatedCost) * liveEthPrice).toFixed(2)})` : ""}
                   </p>
                   <button
                     className="secondary"

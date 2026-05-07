@@ -79,16 +79,15 @@ export const TOKEN_ICO_Provider = ({ children }) => {
       let contractOwner;
       let soldTokens;
 
+      let tokenAddress = ethers.constants.AddressZero;
+      let tokenPrice = 0;
+
       if (contract) {
-        tokenDetails = await contract.getTokenDetails();
         contractOwner = await contract.owner();
         soldTokens = await contract.soldTokens();
+        tokenAddress = await contract.tokenAddress();
+        tokenPrice = await contract.tokenSalePrice();
       } else if (publicClient) {
-        tokenDetails = await publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: "getTokenDetails",
-        });
         contractOwner = await publicClient.readContract({
           address: CONTRACT_ADDRESS,
           abi: CONTRACT_ABI,
@@ -99,25 +98,64 @@ export const TOKEN_ICO_Provider = ({ children }) => {
           abi: CONTRACT_ABI,
           functionName: "soldTokens",
         });
+        tokenAddress = await publicClient.readContract({
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: "tokenAddress",
+        });
+        tokenPrice = await publicClient.readContract({
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: "tokenSalePrice",
+        });
       } else {
         if (showLoader) setLoader(false);
         return null;
       }
 
-      const ethBal =
+      if (
+        tokenAddress &&
+        tokenAddress !== ethers.constants.AddressZero
+      ) {
+        if (contract) {
+          tokenDetails = await contract.getTokenDetails();
+        } else {
+          tokenDetails = await publicClient.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: "getTokenDetails",
+          });
+        }
+      } else {
+        tokenDetails = {
+          name: "Not configured",
+          symbol: "N/A",
+          balance: ethers.BigNumber.from(0),
+          supply: ethers.BigNumber.from(0),
+          tokenPrice: tokenPrice,
+          tokenAddr: tokenAddress,
+        };
+      }
+
+      const rawBalance =
         address && publicClient
-          ? ethers.utils.formatEther(
-              (await publicClient.getBalance({ address })).toString()
-            )
-          : "0";
+          ? await publicClient
+              .getBalance({ address })
+              .catch(() => ethers.BigNumber.from(0))
+          : ethers.BigNumber.from(0);
+      const ethBal = ethers.utils.formatEther(rawBalance ?? ethers.BigNumber.from(0));
+
+      const safeBalance = tokenDetails?.balance ?? ethers.BigNumber.from(0);
+      const safeSupply = tokenDetails?.supply ?? ethers.BigNumber.from(0);
+      const safePrice = tokenDetails?.tokenPrice ?? ethers.BigNumber.from(0);
 
       const token = {
-        tokenBal: ethers.utils.formatEther(tokenDetails.balance.toString()),
-        name: tokenDetails.name,
-        symbol: tokenDetails.symbol,
-        supply: ethers.utils.formatEther(tokenDetails.supply.toString()),
-        tokenPrice: ethers.utils.formatEther(tokenDetails.tokenPrice.toString()),
-        tokenAddr: tokenDetails.tokenAddr,
+        tokenBal: ethers.utils.formatEther(safeBalance.toString()),
+        name: tokenDetails?.name ?? "Unknown",
+        symbol: tokenDetails?.symbol ?? "N/A",
+        supply: ethers.utils.formatEther(safeSupply.toString()),
+        tokenPrice: ethers.utils.formatEther(safePrice.toString()),
+        tokenAddr: tokenDetails?.tokenAddr,
         maticBal: ethBal,
         address: address ? address.toLowerCase() : undefined,
         owner: contractOwner ? contractOwner.toLowerCase() : undefined,

@@ -15,6 +15,11 @@ const Admin = () => {
     account,
     loader,
     currency,
+    TRANSFER_ETHER,
+    TRANSFER_TOKEN,
+    DONATE,
+    addtokenToMetaMask,
+    TOKEN_ADDRESS,
   } = useContext(TOKEN_ICO_Context);
 
   const [tokenDetails, setTokenDetails] = useState(null);
@@ -22,6 +27,12 @@ const Admin = () => {
   const [newPrice, setNewPrice] = useState("");
   const [newTokenAddress, setNewTokenAddress] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+  const [ethReceiver, setEthReceiver] = useState("");
+  const [ethTransferAmount, setEthTransferAmount] = useState("");
+  const [tokenReceiver, setTokenReceiver] = useState("");
+  const [tokenTransferAmount, setTokenTransferAmount] = useState("");
+  const [tokenTransferAddress, setTokenTransferAddress] = useState("");
+  const [donateAmount, setDonateAmount] = useState("");
   const [refreshInterval, setRefreshInterval] = useState(5);
   const [participantCount, setParticipantCount] = useState(null);
   const [participantAddresses, setParticipantAddresses] = useState([]);
@@ -76,7 +87,12 @@ const Admin = () => {
 
   useEffect(() => {
     const fetchParticipants = async () => {
-      if (!publicClient || !tokenDetails?.tokenAddr) return;
+      if (
+        !publicClient ||
+        !tokenDetails?.tokenAddr ||
+        tokenDetails.tokenAddr === ethers.constants.AddressZero
+      )
+        return;
 
       setEventsLoading(true);
       try {
@@ -151,6 +167,52 @@ const Admin = () => {
     await fetchTokenData();
   };
 
+  const handleSendEther = async () => {
+    if (!ethReceiver || !ethTransferAmount) {
+      toast.error("Enter receiver and amount.");
+      return;
+    }
+    await TRANSFER_ETHER({ _receiver: ethReceiver, _amount: ethTransferAmount });
+    setEthReceiver("");
+    setEthTransferAmount("");
+    await fetchTokenData();
+  };
+
+  const handleTransferToken = async () => {
+    if (!tokenTransferAddress || !tokenReceiver || !tokenTransferAmount) {
+      toast.error("Enter token address, recipient, and amount.");
+      return;
+    }
+    await TRANSFER_TOKEN({
+      _tokenAddress: tokenTransferAddress,
+      _sendTo: tokenReceiver,
+      _amount: tokenTransferAmount,
+    });
+    setTokenTransferAddress("");
+    setTokenReceiver("");
+    setTokenTransferAmount("");
+    await fetchTokenData();
+  };
+
+  const handleDonate = async () => {
+    if (!donateAmount) {
+      toast.error("Enter donation amount.");
+      return;
+    }
+    await DONATE(donateAmount);
+    setDonateAmount("");
+    await fetchTokenData();
+  };
+
+  const handleAddTokenToWallet = async () => {
+    const result = await addtokenToMetaMask();
+    if (result?.toLowerCase().includes("added")) {
+      toast.success("Token added to your wallet");
+    } else {
+      toast.error(result || "Unable to add token to wallet");
+    }
+  };
+
   const openAdmin = () => {
     window.location.href = "/admin";
   };
@@ -212,19 +274,24 @@ const Admin = () => {
   }
 
   const connectedWallet = account ? account.toLowerCase() : null;
-  const expectedOwner = OWNER_ADDRESS.toLowerCase();
-  const isOwner = connectedWallet && connectedWallet === expectedOwner;
+  const contractOwner = tokenDetails?.owner;
+  const expectedOwner = contractOwner || OWNER_ADDRESS.toLowerCase();
+  const isOwner =
+    connectedWallet &&
+    (connectedWallet === expectedOwner || connectedWallet === OWNER_ADDRESS.toLowerCase());
 
   if (!isOwner) {
     return renderShell(
       <div className="admin-message-card">
         <h1>Admin Access Denied</h1>
-        <p>Only the configured owner address can access this portal.</p>
+        <p>Only the contract owner can access this portal. Make sure the wallet is connected and on the correct network.</p>
         <div className="admin-deny-details">
           <p>
             Connected: {account}
             <br />
-            Expected Owner: {OWNER_ADDRESS}
+            Contract Owner: {contractOwner || "Unavailable"}
+            <br />
+            Configured Owner: {OWNER_ADDRESS}
           </p>
         </div>
       </div>
@@ -277,6 +344,13 @@ const Admin = () => {
         {activeTab === "overview" && (
           <div className="tab-section">
             <h2>Overview</h2>
+            {tokenDetails.tokenAddr === ethers.constants.AddressZero && (
+              <div className="admin-warning-card">
+                <p>
+                  The ICO token contract is not configured yet. Go to the Manage tab to set the token address and sale price.
+                </p>
+              </div>
+            )}
             <div className="metrics-grid">
               <div className="metric-card">
                 <span className="metric-label">Owner Address</span>
@@ -430,6 +504,19 @@ const Admin = () => {
                 </li>
               </ul>
             </div>
+
+            {participantAddresses.length > 0 && (
+              <div className="recent-buyers">
+                <h3>Recent Buyers</h3>
+                <div className="buyer-list">
+                  {participantAddresses.slice(-10).map((address) => (
+                    <div className="buyer-card" key={address}>
+                      <span>{address}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -505,6 +592,86 @@ const Admin = () => {
                   <p className="info-text">Available: {tokenBal} {tokenDetails.symbol}</p>
                   <button onClick={handleWithdrawTokens} disabled={loader} className="danger-btn">
                     {loader ? "Processing..." : "Withdraw Tokens"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="action-card">
+                <h3>Send ETH</h3>
+                <p>Send native ETH to any address</p>
+                <div className="form-group">
+                  <input
+                    type="text"
+                    placeholder="Recipient address"
+                    value={ethReceiver}
+                    onChange={(e) => setEthReceiver(e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    step="0.001"
+                    placeholder="Amount in ETH"
+                    value={ethTransferAmount}
+                    onChange={(e) => setEthTransferAmount(e.target.value)}
+                  />
+                  <button onClick={handleSendEther} disabled={loader}>
+                    {loader ? "Sending..." : "Send ETH"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="action-card">
+                <h3>Transfer ERC20</h3>
+                <p>Send a token from your wallet using contract address</p>
+                <div className="form-group">
+                  <input
+                    type="text"
+                    placeholder="ERC20 token address"
+                    value={tokenTransferAddress}
+                    onChange={(e) => setTokenTransferAddress(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Recipient address"
+                    value={tokenReceiver}
+                    onChange={(e) => setTokenReceiver(e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    step="0.0001"
+                    placeholder="Amount"
+                    value={tokenTransferAmount}
+                    onChange={(e) => setTokenTransferAmount(e.target.value)}
+                  />
+                  <button onClick={handleTransferToken} disabled={loader}>
+                    {loader ? "Transferring..." : "Transfer Token"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="action-card">
+                <h3>Donate to Owner</h3>
+                <p>Send support funds to the owner wallet</p>
+                <div className="form-group">
+                  <input
+                    type="number"
+                    step="0.001"
+                    placeholder="Amount in ETH"
+                    value={donateAmount}
+                    onChange={(e) => setDonateAmount(e.target.value)}
+                  />
+                  <button onClick={handleDonate} disabled={loader}>
+                    {loader ? "Processing..." : "Donate"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="action-card">
+                <h3>Add ICO Token</h3>
+                <p>Add the current token address to MetaMask</p>
+                <div className="form-group">
+                  <p className="info-text">Token address: {TOKEN_ADDRESS}</p>
+                  <button onClick={handleAddTokenToWallet} disabled={loader}>
+                    Add Token to Wallet
                   </button>
                 </div>
               </div>

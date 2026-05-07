@@ -19,7 +19,7 @@ const holeskyCustom = defineChain({
   rpcUrls: {
     default: {
       http: [
-        "https://holesky.drpc.org",
+        "https://rpc.ankr.com/eth_holesky",
         "https://ethereum-holesky.blockpi.network/v1/rpc/public",
         "https://endpoints.omniatech.io/v1/eth/holesky/public",
         "https://holesky.gateway.tenderly.co",
