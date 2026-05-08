@@ -262,38 +262,52 @@ export const CHECK_ACCOUNT_BALANCE = async (ADDRESS) => {
 };
 
 export const addtokenToMetaMask = async () => {
-  if (window.ethereum) {
-    const tokenDetails = await ERC20(TOKEN_ADDRESS);
+  if (!window.ethereum) {
+    return "MetaMask is not installed";
+  }
 
-    const tokenDecimals = tokenDetails?.decimals;
+  try {
+    // Get token details from contract
+    let tokenDecimals = 18; // Default to 18
+    let tokenSymbol = "TBC"; // Default symbol
+    let tokenName = "The Blockchain Coders";
+
+    try {
+      const tokenDetails = await ERC20(TOKEN_ADDRESS);
+      if (tokenDetails) {
+        tokenDecimals = tokenDetails.decimals || 18;
+        tokenSymbol = tokenDetails.symbol || "TBC";
+        tokenName = tokenDetails.name || "The Blockchain Coders";
+      }
+    } catch (err) {
+      console.log("Could not fetch token details, using defaults:", err.message);
+      // Continue with default values
+    }
+
     const tokenAddress = TOKEN_ADDRESS;
-    const tokenSymbol = tokenDetails?.symbol;
     const tokenImage =
       "https://www.daulathussain.com/wp-content/uploads/2024/05/theblockchaincoders.jpg";
 
-    try {
-      const wasAdded = await window.ethereum.request({
-        method: "wallet_watchAsset",
-        params: {
-          type: "ERC20",
-          options: {
-            address: tokenAddress,
-            symbol: tokenSymbol,
-            decimals: tokenDecimals,
-            image: tokenImage,
-          },
+    const wasAdded = await window.ethereum.request({
+      method: "wallet_watchAsset",
+      params: {
+        type: "ERC20",
+        options: {
+          address: tokenAddress,
+          symbol: tokenSymbol,
+          decimals: tokenDecimals,
+          image: tokenImage,
         },
-      });
+      },
+    });
 
-      if (wasAdded) {
-        return "Token added!";
-      } else {
-        return "Token not added";
-      }
-    } catch (error) {
-      return "failed to add";
+    if (wasAdded) {
+      return "Token added!";
+    } else {
+      return "Token not added";
     }
-  } else {
-    return "MetaMask is not installed";
+  } catch (error) {
+    console.log("Add token error:", error);
+    return "failed to add";
   }
 };

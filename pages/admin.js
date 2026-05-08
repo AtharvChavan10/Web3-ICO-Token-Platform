@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { ethers } from "ethers";
 import { usePublicClient } from "wagmi";
-import { Footer, Header, Loader } from "../Components/index";
+import { Footer, Header, Loader, TransactionHistory } from "../Components/index";
 import { TOKEN_ICO_Context } from "../context";
 import { OWNER_ADDRESS, CONTRACT_ADDRESS } from "../context/constants";
 import toast from "react-hot-toast";

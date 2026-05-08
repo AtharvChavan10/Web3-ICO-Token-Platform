@@ -25,6 +25,7 @@ import {
   Donate,
   UpdateAddress,
   UpdatePrice,
+  TransactionHistory,
 } from "../Components/index";
 import { TOKEN_ICO_Context } from "../context/index";
 import { shortenAddress } from "../Utils/index";
@@ -267,6 +268,7 @@ const index = () => {
 
        
       </div>
+      <TransactionHistory />
     </>
   );
 };

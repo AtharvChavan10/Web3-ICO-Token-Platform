@@ -21,7 +21,8 @@ const Brand = () => {
 
         <div className="brand__wrap ul_li_center">
           {brandPartners.map((brand) => (
-            <div className="brand__item text-center" key={brand.id}>\n              <img
+            <div className="brand__item text-center" key={brand.id}>
+              <img
                 src={`assets/img/brand/${brand.logo}`}
                 alt={brand.name}
                 title={brand.name}

@@ -23,6 +23,7 @@ import TransferCurrency from "./TransferCurrency";
 import Donate from "./Donate";
 import UpdatePrice from "./UpdatePrice";
 import UpdateAddress from "./UpdateAddress";
+import TransactionHistory from "./TransactionHistory";
 
 export {
   Footer,
@@ -48,4 +49,5 @@ export {
   Donate,
   UpdateAddress,
   UpdatePrice,
+  TransactionHistory,
 };

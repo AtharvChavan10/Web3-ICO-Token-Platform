@@ -27,6 +27,7 @@ export const TOKEN_ICO_Provider = ({ children }) => {
   const [account, setAccount] = useState();
   const [count, setCount] = useState(0);
   const [kycVerified, setKycVerified] = useState(false);
+  const [transactions, setTransactions] = useState([]);
 
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
@@ -52,12 +53,23 @@ export const TOKEN_ICO_Provider = ({ children }) => {
 
     if (!address) {
       setKycVerified(false);
+      setTransactions([]);
       return;
     }
 
     const verified =
       localStorage.getItem(`kycVerified:${address.toLowerCase()}`) === "true";
     setKycVerified(verified);
+
+    // Load transaction history from localStorage
+    const storedTx = localStorage.getItem(`transactions:${address.toLowerCase()}`);
+    if (storedTx) {
+      try {
+        setTransactions(JSON.parse(storedTx));
+      } catch (err) {
+        setTransactions([]);
+      }
+    }
   }, [address]);
 
   const notifySuccess = (msg) => toast.success(msg, { duration: 2000 });
@@ -174,6 +186,45 @@ export const TOKEN_ICO_Provider = ({ children }) => {
     }
   };
 
+  const saveTransaction = (txData) => {
+    if (!address) return;
+    const newTx = {
+      id: Date.now(),
+      hash: txData.hash,
+      type: txData.type,
+      amount: txData.amount,
+      cost: txData.cost,
+      status: txData.status,
+      timestamp: new Date().toISOString(),
+      gasUsed: txData.gasUsed || null,
+      gasPrice: txData.gasPrice || null,
+      confirmations: 0,
+    };
+    const updatedTxs = [newTx, ...transactions];
+    setTransactions(updatedTxs);
+    localStorage.setItem(
+      `transactions:${address.toLowerCase()}`,
+      JSON.stringify(updatedTxs)
+    );
+    return newTx;
+  };
+
+  const updateTransaction = (txId, updates) => {
+    if (!address) return;
+    const updatedTxs = transactions.map((tx) =>
+      tx.id === txId ? { ...tx, ...updates } : tx
+    );
+    setTransactions(updatedTxs);
+    localStorage.setItem(
+      `transactions:${address.toLowerCase()}`,
+      JSON.stringify(updatedTxs)
+    );
+  };
+
+  const getEtherscanLink = (hash) => {
+    return `https://holesky.etherscan.io/tx/${hash}`;
+  };
+
   const BUY_TOKEN = async (amount) => {
     try {
       if (!isConnected || !address || !contract) {
@@ -233,15 +284,56 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         return;
       }
 
+      // Estimate gas
+      let estimatedGas = ethers.BigNumber.from(8000000);
+      try {
+        estimatedGas = await contract.estimateGas.buyToken(amountNumber, {
+          value: payAmount.toString(),
+        });
+      } catch (err) {
+        console.log("Gas estimation failed, using default");
+      }
+
+      notifySuccess("Processing transaction...");
+
       const transaction = await contract.buyToken(amountNumber, {
         value: payAmount.toString(),
-        gasLimit: ethers.utils.hexlify(8000000),
+        gasLimit: estimatedGas.mul(120).div(100), // Add 20% buffer
       });
 
-      await transaction.wait();
+      // Save transaction with hash immediately
+      const txRecord = saveTransaction({
+        hash: transaction.hash,
+        type: "BUY_TOKEN",
+        amount: amountNumber,
+        cost: totalCost,
+        status: "pending",
+      });
+
+      // Show transaction link
+      const txLink = getEtherscanLink(transaction.hash);
+      notifySuccess(
+        `TX Pending: ${transaction.hash.slice(0, 6)}...${transaction.hash.slice(-4)}`
+      );
+
+      // Wait for confirmation
+      const receipt = await transaction.wait();
+
+      // Update transaction status
+      updateTransaction(txRecord.id, {
+        status: "confirmed",
+        gasUsed: receipt.gasUsed.toString(),
+        gasPrice: receipt.effectiveGasPrice.toString(),
+        confirmations: receipt.confirmations || 1,
+      });
+
       setLoader(false);
-      notifySuccess("Transaction completed successfully");
-      window.location.reload();
+      notifySuccess(
+        `✅ Transaction Confirmed! Hash: ${transaction.hash.slice(0, 6)}...`
+      );
+
+      // Reload after a short delay
+      setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.log(error);
 
@@ -456,6 +548,9 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         currency,
         kycVerified,
         setKycVerified,
+        transactions,
+        getEtherscanLink,
+        updateTransaction,
       }}
     >
       {children}

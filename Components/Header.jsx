@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
+import toast from "react-hot-toast";
 
 const Header = ({
   setOwnerModel,
@@ -11,6 +13,7 @@ const Header = ({
   openTools,
   isAdmin,
 }) => {
+  const { address, isConnected } = useAccount();
   const headerClass = `site-header ico-header ${isAdmin ? "admin-page-header" : "header--transparent"}`;
 
   return (
@@ -100,6 +103,7 @@ const Header = ({
             </div> */}
 
             <div className="header__action ul_li">
+              <ConnectButton />
               <div className="d-xl-none">
                 <a className="header__bar hamburger_menu">
                   <div className="header__bar-icon">
@@ -110,7 +114,6 @@ const Header = ({
                   </div>
                 </a>
               </div>
-              <ConnectButton />
             </div>
           </div>
         </div>

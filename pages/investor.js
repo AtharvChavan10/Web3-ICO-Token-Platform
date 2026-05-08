@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import toast from "react-hot-toast";
 import { TOKEN_ICO_Context } from "../context/index";
-import { Header, Footer, KYC, Loader } from "../Components";
+import { Header, Footer, KYC, Loader, TransactionHistory } from "../Components";
 import { shortenAddress } from "../Utils/index";
 
 const Investor = () => {
@@ -254,6 +254,7 @@ const Investor = () => {
 
         <Footer />
       </div>
+      <TransactionHistory />
     </>
   );
 };
