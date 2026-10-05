@@ -1,191 +1,98 @@
-# 🚀 Web3 ICO Token Platform
+# Web3 ICO Token Platform
 
-A full-stack **Web3 decentralized application (DApp)** that enables users to participate in an **Initial Coin Offering (ICO)** and purchase ERC-20 tokens securely using blockchain technology.
+A token sale site for Sepolia, Ethereum’s public test network. Visitors connect a wallet, complete a short identity check, and buy TBC with faucet ETH. Real ETH is not used.
 
-This project demonstrates end-to-end development of a decentralized token sale platform including **smart contracts, wallet integration, and frontend UI**.
+The sale is a pair of Solidity contracts: an ERC-20 token and a sale contract that prices the token, takes the payment, and sends the tokens back to the buyer.
 
----
+## What you can do
 
-## 📌 Features
+- Connect MetaMask or WalletConnect on Sepolia
+- Read the round price, tokens sold, and tokens left
+- Sign a KYC check in the connected wallet before a purchase
+- Buy tokens and add TBC to the wallet
+- Open an investor page for balance, progress, and another buy entry
+- Open an admin page that only the owner wallet can use
 
-- 🔐 Decentralized ICO (Initial Coin Offering)
-- 💰 Buy ERC-20 tokens using ETH
-- 🌐 Wallet connection via Web3Modal / MetaMask
-- ⚡ Fast and responsive UI (React + Tailwind CSS)
-- 📊 Real-time transaction updates
-- 🔄 Secure and transparent blockchain transactions
-- 🧠 Input validation and error handling
+Until a sale is deployed in that browser, the home page shows a labeled sample round. After deployment, those figures come from the contract.
 
----
+## Stack
 
-## 🧱 Tech Stack
+- Next.js 14 (pages router) and React 18
+- RainbowKit, wagmi, and viem for the wallet
+- ethers v5 for contract calls
+- Solidity sale contracts, compiled with solc
 
-### 🖥 Frontend
-- React.js
-- Tailwind CSS
-- Chart.js
-- Ethers.js
+## Project layout
 
-### 🔗 Blockchain
-- Solidity (Smart Contracts)
-- Hardhat (Development & Testing)
-- Web3Modal (Wallet Integration)
+```
+pages/          Home, investor desk, admin
+Components/     Page sections and modals
+context/        Wallet, sale reads, and deploy
+contracts/      SaleToken.sol and TokenICO.sol
+scripts/        Compile the sale contracts
+Utils/          KYC record stored in this browser
+styles/         Site styles
+public/         Images, fonts, and the favicon
+```
 
-### 🌐 Network
-- Ethereum (Testnet: Goerli / Sepolia)
+## Run it locally
 
----
-
-## 📁 Project Structure
-
-Web3-ICO-Token-Platform/
-│
-├── client/                  # Frontend (React)
-│   ├── components/
-│   ├── pages/
-│   ├── context/
-│   └── utils/
-│
-├── smart-contracts/         # Smart Contracts
-│   ├── contracts/
-│   ├── scripts/
-│   ├── test/
-│   └── hardhat.config.js
-│
-├── .gitignore
-├── package.json
-└── README.md
-
----
-
-## ⚙️ Smart Contracts
-
-### 🔹 ERC-20 Token Contract
-- Custom token implementation
-- Token minting and supply control
-
-### 🔹 ICO Contract
-- Manages token sale logic
-- Accepts ETH payments
-- Automatically transfers tokens to buyers
-
----
-
-## 🔗 Deployment (Update after deploying)
-
-- 🪙 Token Contract:  
-  https://etherscan.io/address/YOUR_TOKEN_ADDRESS
-
-- 💼 ICO Contract:  
-  https://etherscan.io/address/YOUR_ICO_ADDRESS
-
----
-
-## 🚀 Getting Started
-
-### 1️⃣ Clone the Repository
-
-git clone https://github.com/AtharvChavan10/Web3-ICO-Token-Platform.git  
+```bash
+git clone https://github.com/AtharvChavan10/Web3-ICO-Token-Platform.git
 cd Web3-ICO-Token-Platform
+npm install
+npm run dev
+```
 
----
+Open http://localhost:3000.
 
-### 2️⃣ Install Frontend Dependencies
+## Use the sale
 
-cd client  
-npm install  
+1. In MetaMask, switch to Sepolia.
+2. Get faucet ETH from the Google Cloud Sepolia faucet. The home page links to it.
+3. Connect that wallet on the site.
+4. If this browser has no sale yet, click **Deploy sale** and approve the three prompts: the token, the sale contract at 0.001 ETH, and the transfer of 1,000,000 TBC into the sale.
+5. Complete KYC. The wallet must sign the check. A rejected signature does not count.
+6. Buy tokens. The contract sends TBC to the paying wallet.
 
----
+A different wallet can buy after its own KYC. It cannot open the admin tools. That page only answers to the owner wallet, `0xb8528831179FC5906A08E61Af3249166794b81f2`.
 
-### 3️⃣ Run Frontend
+## Contracts
 
-npm start  
+`contracts/SaleToken.sol` mints 10,000,000 TBC to the deployer.
 
----
+`contracts/TokenICO.sol` sells that token. The buyer pays `amount * price` in ETH. The contract transfers the tokens and forwards the ETH to the owner.
 
-### 4️⃣ Setup Smart Contracts
+Compile the pair with:
 
-cd smart-contracts  
-npm install  
-npx hardhat compile  
-npx hardhat run scripts/deploy.js --network goerli  
+```bash
+node scripts/compile-sale.js
+```
 
----
+The site deploys those artifacts from the connected wallet. No private key is stored in the repo.
 
-## 🔐 Environment Variables
+## Scripts
 
-Create a `.env` file inside `smart-contracts/`:
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the local site |
+| `npm run build` | Production build |
+| `npm start` | Serve the production build |
+| `npm run lint` | Lint the project |
 
-PRIVATE_KEY=your_wallet_private_key  
-RPC_URL=your_rpc_provider_url  
+## Note
 
----
+This is a testnet project for learning and demonstration. Faucet ETH has no cash value. Do not point the sale at mainnet or at real funds without an audit.
 
-## 🧪 Testing
+## Authors
 
-npx hardhat test  
+Atharv Chavan  
+Aaditya Yadav  
+Nikhil Parande  
+Chaitanya Naik  
 
----
+Blockchain developers.
 
-## 📊 How It Works
+## License
 
-1. User connects wallet (MetaMask)  
-2. Frontend connects to blockchain using Ethers.js  
-3. User enters ETH amount  
-4. Smart contract calculates token amount  
-5. Tokens are transferred instantly  
-6. Transaction stored on blockchain  
-
----
-
-## 📸 Screenshots
-
-<img width="975" height="548" alt="image" src="https://github.com/user-attachments/assets/0cd787a8-a69e-4734-85d8-f268de6604e0" />
-<img width="975" height="553" alt="image" src="https://github.com/user-attachments/assets/8550e229-a2a4-4e16-9171-90d2e4688384" />
-<img width="975" height="520" alt="image" src="https://github.com/user-attachments/assets/0ddfe767-f6a6-491e-b1ff-ce62677850e0" />
-
----
-
-## 🎯 Use Cases
-
-- Blockchain startup fundraising  
-- Token launch platforms  
-- Learning Web3 full-stack development  
-
----
-
-## ⚠️ Disclaimer
-
-This project is for **educational purposes only**.  
-Do not use in production without proper security audits.
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository  
-2. Create a new branch  
-3. Commit your changes  
-4. Open a pull request  
-
----
-
-## 📄 License
-
-MIT License
-
----
-
-## 👨‍💻 Authors
-
-Atharv Chavan
-Aaditya Yadav
-Nikhil Parande
-Chaitanya Naik
-Blockchain Developers 🚀  
-
----
-
-## ⭐ Support
-
-If you like this project, give it a ⭐ on GitHub!
+MIT. See [LICENSE](LICENSE).
