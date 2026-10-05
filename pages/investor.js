@@ -8,6 +8,7 @@ const Investor = () => {
   const {
     TOKEN_ICO,
     BUY_TOKEN,
+    CONNECT_WALLET,
     account,
     kycVerified,
     setKycVerified,
@@ -23,12 +24,16 @@ const Investor = () => {
   const [walletBalance, setWalletBalance] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchDetails = async () => {
       const data = await TOKEN_ICO({ showLoader: false, toastOnError: false });
-      setDetail(data);
+      if (!cancelled) setDetail(data);
     };
 
-    if (account) fetchDetails();
+    fetchDetails();
+    return () => {
+      cancelled = true;
+    };
   }, [account]);
 
   useEffect(() => {
@@ -101,14 +106,25 @@ const Investor = () => {
     }
   };
 
+  const openKyc = () => {
+    if (!account) {
+      toast.error("Connect your wallet to authenticate.");
+      CONNECT_WALLET();
+      return;
+    }
+    setKycModel(true);
+  };
+
   const handleBuy = async () => {
     if (!account) {
       toast.error("Connect your wallet first");
+      CONNECT_WALLET();
       return;
     }
 
     if (!kycVerified) {
-      toast.error("Please complete KYC before buying tokens.");
+      toast.error("Authenticate with KYC before you buy.");
+      setKycModel(true);
       return;
     }
 
@@ -120,18 +136,32 @@ const Investor = () => {
     await BUY_TOKEN(amount);
   };
 
+  const formatAmount = (value) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return "0";
+    return num.toLocaleString("en-US", { maximumFractionDigits: 4 });
+  };
+
   const availableTokens = Number(detail?.tokenBal || 0);
   const totalSupply = Number(detail?.supply || 0);
   const soldTokens = Number(detail?.soldTokens || 0);
   const soldPercentage = totalSupply ? ((soldTokens / totalSupply) * 100).toFixed(2) : 0;
-  const estimatedCost = detail ? (amount * Number(detail.tokenPrice)).toFixed(4) : "0.0000";
-  const priceUsd = liveEthPrice ? (Number(detail?.tokenPrice || 0) * liveEthPrice).toFixed(2) : "Loading...";
-  const holdingsValue = detail && liveEthPrice ? `$${(Number(detail.tokenBal) * Number(detail.tokenPrice) * liveEthPrice).toFixed(2)}` : "Loading...";
+  const unitPrice = Number(detail?.tokenPrice || 0);
+  const tokenCount = Number(detail?.tokenBal || 0);
+  const estimatedCost = (Number(amount || 0) * unitPrice).toFixed(4);
+  const estimatedUsd = liveEthPrice ? (Number(estimatedCost) * liveEthPrice).toFixed(2) : null;
+  const priceUsd = liveEthPrice ? (unitPrice * liveEthPrice).toFixed(2) : "—";
+  const holdingsValue =
+    tokenCount === 0
+      ? "$0.00"
+      : liveEthPrice
+        ? `$${(tokenCount * unitPrice * liveEthPrice).toFixed(2)}`
+        : "—";
 
   return (
     <>
       <div className="body_wrap">
-        <Header />
+        <Header openAdmin={() => { window.location.href = "/admin"; }} />
 
         <main className="investor-page">
           <section className="investor-hero">
@@ -152,7 +182,7 @@ const Investor = () => {
                   <div className="stat">
                     <span className="label">Your Token Balance</span>
                     <span className="value">
-                      {detail.tokenBal} {detail.symbol}
+                      {formatAmount(detail.tokenBal)} {detail.symbol}
                     </span>
                   </div>
                   <div className="stat">
@@ -161,7 +191,7 @@ const Investor = () => {
                   </div>
                   <div className="stat">
                     <span className="label">Available Tokens</span>
-                    <span className="value">{availableTokens}</span>
+                    <span className="value">{formatAmount(availableTokens)}</span>
                   </div>
                   <div className="stat">
                     <span className="label">Sale Completion</span>
@@ -204,49 +234,54 @@ const Investor = () => {
                 </div>
               )}
 
-              <div className="investor-actions">
-                <div className="investor-card">
-                  <h2>Buy Tokens</h2>
-                  <p className="card-description">
-                    Buy directly from the ICO contract after completing your KYC verification.
-                  </p>
-                  <div className="form-row">
-                    <input
-                      type="number"
-                      min="1"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                    />
-                    <button onClick={handleBuy} disabled={loader}>
-                      Buy
-                    </button>
-                  </div>
-                  <div className="form-row small">
-                    <button className="secondary" onClick={handleBuyMax} disabled={!detail || loader}>
-                      Buy Max
-                    </button>
-                    <button className="secondary" onClick={handleAddToken}>
-                      Add Token to Wallet
-                    </button>
-                  </div>
-                  <p className="estimate">
-                    Estimated cost: {estimatedCost} ETH
-                    {detail && liveEthPrice ? ` ($${(Number(estimatedCost) * liveEthPrice).toFixed(2)})` : ""}
-                  </p>
-                  <button
-                    className="secondary"
-                    onClick={() => setKycModel(true)}
-                    disabled={kycVerified}
-                  >
-                    {kycVerified ? "KYC Completed" : "Complete KYC"}
+              <div className="buy-card">
+                <div className="buy-card__head">
+                  <h2>Buy tokens</h2>
+                  <span className={kycVerified ? "kyc-pill is-ok" : "kyc-pill"}>
+                    {kycVerified ? "KYC verified" : "KYC needed"}
+                  </span>
+                </div>
+                <label className="buy-field">
+                  <span>Tokens</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                  />
+                </label>
+                <div className="buy-pay">
+                  <span>You pay</span>
+                  <strong>{estimatedCost} ETH</strong>
+                  {estimatedUsd && <em>${estimatedUsd}</em>}
+                </div>
+                <button className="buy-go" onClick={handleBuy} disabled={loader}>
+                  {kycVerified ? "Buy" : "Verify to buy"}
+                </button>
+                <div className="buy-extra">
+                  <button type="button" onClick={handleBuyMax} disabled={!detail || loader}>
+                    Buy max
                   </button>
+                  <button type="button" onClick={handleAddToken}>
+                    Add token
+                  </button>
+                  {!kycVerified && (
+                    <button type="button" onClick={openKyc}>
+                      Complete KYC
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           </section>
 
           {kycModel && (
-            <KYC setKycVerified={setKycVerified} setKycModel={setKycModel} />
+            <KYC
+              account={account}
+              CONNECT_WALLET={CONNECT_WALLET}
+              setKycVerified={setKycVerified}
+              setKycModel={setKycModel}
+            />
           )}
 
           {loader && <Loader />}

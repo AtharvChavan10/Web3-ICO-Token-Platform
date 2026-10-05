@@ -1,75 +1,61 @@
 import React from "react";
+import Reveal from "./Reveal";
+
+const phases = [
+  {
+    phase: "01",
+    when: "Q1 2025",
+    title: "Contracts",
+    text: "ERC-20 token and the sale contract. Buys use Sepolia faucet ETH, not real ETH.",
+    state: "Done",
+  },
+  {
+    phase: "02",
+    when: "Q3 2025",
+    title: "Wallet app",
+    text: "Buy flow, KYC gate, investor desk, and owner tools on the same frontend.",
+    state: "Done",
+  },
+  {
+    phase: "03",
+    when: "Q1 2026",
+    title: "Public round",
+    text: "The sale is open. Price, supply, and purchases read live from the contract.",
+    state: "Live",
+  },
+  {
+    phase: "04",
+    when: "Q4 2026",
+    title: "After the round",
+    text: "Staking, a wider treasury view, and a second network if the round holds.",
+    state: "Next",
+  },
+];
 
 const Roadmap = () => {
   return (
-    <section id="roadmap" className="roadmap pos-rel pt-140 pb-150">
+    <section id="roadmap" className="roadmap-band">
       <div className="container">
-        <div className="sec-title text-center mb-70">
-          <h5 className="sec-title__subtitle">PROJECT TIMELINE</h5>
-          <h2 className="sec-title__title">Our Project Roadmap</h2>
-          <p>Follow our strategic development phases as we build the future of decentralized finance</p>
-        </div>
-
-        <div className="roadmap__wrap">
-          <div className="roadmap__item">
-            <div className="roadmap__number">Phase 1</div>
-            <div className="roadmap__content">
-              <h4>Foundation & Smart Contracts</h4>
-              <p>Development and deployment of ERC-20 token and ICO smart contracts. Security audits and testing on testnet.</p>
-              <ul className="roadmap__list">
-                <li>✓ Smart contract development</li>
-                <li>✓ Security audits</li>
-                <li>✓ Testnet deployment</li>
-                <li>✓ Documentation</li>
-              </ul>
-              <span className="roadmap__date">Q1 2024</span>
-            </div>
+        <Reveal>
+          <div className="sec-title text-center mb-70">
+            <h5 className="sec-title__subtitle">Roadmap</h5>
+            <h2 className="sec-title__title">From contract to public sale</h2>
           </div>
-
-          <div className="roadmap__item">
-            <div className="roadmap__number">Phase 2</div>
-            <div className="roadmap__content">
-              <h4>Frontend & Wallet Integration</h4>
-              <p>Build responsive web interface with Web3 wallet integration, MetaMask support, and KYC verification system.</p>
-              <ul className="roadmap__list">
-                <li>✓ React frontend development</li>
-                <li>✓ Wallet integration (MetaMask, WalletConnect)</li>
-                <li>✓ KYC verification system</li>
-                <li>✓ UI/UX optimization</li>
-              </ul>
-              <span className="roadmap__date">Q2 2024</span>
-            </div>
-          </div>
-
-          <div className="roadmap__item">
-            <div className="roadmap__number">Phase 3</div>
-            <div className="roadmap__content">
-              <h4>ICO Launch & Testing</h4>
-              <p>Official ICO launch on mainnet with comprehensive user testing, support systems, and monitoring.</p>
-              <ul className="roadmap__list">
-                <li>✓ Mainnet deployment</li>
-                <li>✓ Public ICO launch</li>
-                <li>✓ 24/7 technical support</li>
-                <li>✓ Real-time monitoring</li>
-              </ul>
-              <span className="roadmap__date">Q3 2024</span>
-            </div>
-          </div>
-
-          <div className="roadmap__item">
-            <div className="roadmap__number">Phase 4</div>
-            <div className="roadmap__content">
-              <h4>Platform Features & Expansion</h4>
-              <p>Addition of advanced features including staking, governance tokens, and ecosystem expansion.</p>
-              <ul className="roadmap__list">
-                <li>→ Token staking mechanism</li>
-                <li>→ Governance features</li>
-                <li>→ Multi-chain support</li>
-                <li>→ Mobile application</li>
-              </ul>
-              <span className="roadmap__date">Q4 2024+</span>
-            </div>
-          </div>
+        </Reveal>
+        <div className="phase-list">
+          {phases.map((item, index) => (
+            <Reveal key={item.phase} delay={index * 80}>
+              <article className={`phase-card phase-card--${item.state.toLowerCase()}`}>
+                <div className="phase-card__top">
+                  <span>{item.phase}</span>
+                  <em>{item.state}</em>
+                </div>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+                <small>{item.when}</small>
+              </article>
+            </Reveal>
+          ))}
         </div>
       </div>
     </section>

@@ -24,6 +24,7 @@ import Donate from "./Donate";
 import UpdatePrice from "./UpdatePrice";
 import UpdateAddress from "./UpdateAddress";
 import TransactionHistory from "./TransactionHistory";
+import BackToTop from "./BackToTop";
 
 export {
   Footer,
@@ -50,4 +51,5 @@ export {
   UpdateAddress,
   UpdatePrice,
   TransactionHistory,
+  BackToTop,
 };

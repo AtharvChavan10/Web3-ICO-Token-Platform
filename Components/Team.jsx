@@ -1,114 +1,34 @@
 import React from "react";
-import {
-  TiSocialFacebook,
-  TiSocialTwitter,
-  TiSocialLinkedin,
-  TiSocialInstagram,
-  TiSocialGithub,
-} from "react-icons/ti";
-import { FaPlus } from "react-icons/fa6";
+import Reveal from "./Reveal";
 
 const teamMembers = [
-  {
-    id: 1,
-    name: "Michael Johnson",
-    role: "Lead Developer & Blockchain Engineer",
-    bio: "Expert in Solidity, smart contracts, and blockchain architecture with 5+ years of experience.",
-  },
-  {
-    id: 2,
-    name: "Sarah Williams",
-    role: "Full Stack Developer",
-    bio: "Specialized in React, Web3 integration, and creating responsive DApp interfaces.",
-  },
-  {
-    id: 3,
-    name: "David Chen",
-    role: "Smart Contract Auditor",
-    bio: "Security expert focused on smart contract testing, auditing, and vulnerability assessment.",
-  },
-  {
-    id: 4,
-    name: "Emma Davis",
-    role: "UI/UX Designer",
-    bio: "Creative designer specializing in crypto platforms and decentralized application interfaces.",
-  },
-  {
-    id: 5,
-    name: "James Wilson",
-    role: "DevOps & Infrastructure",
-    bio: "Infrastructure expert managing deployment, scaling, and system reliability.",
-  },
-  {
-    id: 6,
-    name: "Lisa Martinez",
-    role: "Project Manager",
-    bio: "Experienced project manager ensuring on-time delivery and team coordination.",
-  },
+  ["AC", "Atharv Chavan", "Founder", "Leads the token sale, the contracts, and the public round."],
+  ["NP", "Nikhil Parande", "Developer", "Wallet connection, the buy path, and the investor desk."],
+  ["AY", "Aaditya Yadav", "Developer", "Sale contracts, deployment, and keeping the round online."],
+  ["CN", "Chaitanya Naik", "Developer", "The sale page, the docs, and how the round reads."],
 ];
 
 const Team = () => {
   return (
-    <section id="team" className="team pos-rel">
+    <section id="team" className="team-band pos-rel">
       <div className="container">
-        <div className="sec-title text-center mb-70">
-          <h5 className="sec-title__subtitle">Our Team</h5>
-          <h2 className="sec-title__title">Meet our skilled team</h2>
-          <p>Experienced professionals dedicated to building a secure and innovative blockchain platform</p>
-        </div>
-
-        <div className="team__wrap ul_li">
-          {teamMembers.map((member) => (
-            <div className="team__item" key={member.id}>
-              <div className="avatar">
-                <img src={`assets/img/team/img_0${member.id}.png`} alt={member.name} />
-              </div>
-              <div className="team__info text-center mb-20">
-                <h3>{member.name}</h3>
-                <span className="team__role">{member.role}</span>
-                <p className="team__bio">{member.bio}</p>
-              </div>
-
-              <div className="team__social ul_li_center">
-                <ul className="team__social-link link-left ul_li">
-                  <li>
-                    <a href="#" title="Facebook">
-                      <TiSocialFacebook />
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" title="GitHub">
-                      <TiSocialGithub />
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" title="Instagram">
-                      <TiSocialInstagram />
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" title="LinkedIn">
-                      <TiSocialLinkedin />
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" title="Twitter">
-                      <TiSocialTwitter />
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
+        <Reveal>
+          <div className="sec-title text-center mb-70">
+            <h5 className="sec-title__subtitle">People</h5>
+            <h2 className="sec-title__title">Atharv Chavan and the team</h2>
+          </div>
+        </Reveal>
+        <div className="team-grid">
+          {teamMembers.map(([initials, name, role, bio], index) => (
+            <Reveal key={name} delay={index * 60}>
+              <article className="member-card">
+                <div className="member-card__avatar">{initials}</div>
+                <h3>{name}</h3>
+                <span>{role}</span>
+                <p>{bio}</p>
+              </article>
+            </Reveal>
           ))}
-        </div>
-      </div>
-
-      <div className="team__shape">
-        <div className="shape shape-1">
-          <img src="assets/img/shape/s_shape1.png" alt="" />
-        </div>
-        <div className="shape shape-2">
-          <img src="assets/img/shape/s_shape2.png" alt="" />
         </div>
       </div>
     </section>

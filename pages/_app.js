@@ -1,5 +1,7 @@
-import toast, { Toaster } from "react-hot-toast";
+import Head from "next/head";
+import { Toaster } from "react-hot-toast";
 import "../styles/globals.css";
+import "../styles/polish.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import {
   getDefaultConfig,
@@ -7,22 +9,20 @@ import {
   darkTheme,
 } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
-import { holesky } from "wagmi/chains";
+import { sepolia } from "wagmi/chains";
 import { defineChain } from "viem";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
 import { TOKEN_ICO_Provider } from "../context/index";
 
-// Use custom RPC URLs (public RPCs often 403 from browser; multiple fallbacks)
-const holeskyCustom = defineChain({
-  ...holesky,
+// Sepolia is the Ethereum testnet that still has faucets. Holesky is shut down.
+const sepoliaCustom = defineChain({
+  ...sepolia,
   rpcUrls: {
     default: {
       http: [
-        "https://rpc.ankr.com/eth_holesky",
-        "https://ethereum-holesky.blockpi.network/v1/rpc/public",
-        "https://endpoints.omniatech.io/v1/eth/holesky/public",
-        "https://holesky.gateway.tenderly.co",
+        "https://ethereum-sepolia-rpc.publicnode.com",
+        "https://1rpc.io/sepolia",
       ],
     },
   },
@@ -31,7 +31,7 @@ const holeskyCustom = defineChain({
 const config = getDefaultConfig({
   appName: "Token ICO Dapp",
   projectId: "6d836139a63aa0df1597c559947a4808",
-  chains: [holeskyCustom],
+  chains: [sepoliaCustom],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 
@@ -46,6 +46,13 @@ const queryClient = new QueryClient({
 export default function App({ Component, pageProps }) {
   return (
     <>
+      <Head>
+        <title>ICO Token Sale</title>
+        <meta
+          name="description"
+          content="Connect a wallet and buy ERC-20 tokens with Sepolia faucet ETH. Real ETH is not used."
+        />
+      </Head>
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitProvider
@@ -64,19 +71,6 @@ export default function App({ Component, pageProps }) {
           </RainbowKitProvider>
         </QueryClientProvider>
       </WagmiProvider>
-
-      <script src="assets/js/jquery-3.5.1.min.js"></script>
-      <script src="assets/js/bootstrap.bundle.min.js"></script>
-      <script src="assets/js/wow.min.js"></script>
-      <script src="assets/js/appear.js"></script>
-      <script src="assets/js/jquery.magnific-popup.min.js"></script>
-      <script src="assets/js/metisMenu.min.js"></script>
-      <script src="assets/js/jquery.marquee.min.js"></script>
-      <script src="assets/js/parallax-scroll.js"></script>
-      <script src="assets/js/countdown.js"></script>
-      <script src="assets/js/easing.min.js"></script>
-      <script src="assets/js/scrollspy.js"></script>
-      <script src="assets/js/main.js"></script>
     </>
   );
 }

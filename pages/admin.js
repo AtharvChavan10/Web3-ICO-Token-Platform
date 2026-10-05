@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { ethers } from "ethers";
 import { usePublicClient } from "wagmi";
 import { Footer, Header, Loader, TransactionHistory } from "../Components/index";
 import { TOKEN_ICO_Context } from "../context";
-import { OWNER_ADDRESS, CONTRACT_ADDRESS } from "../context/constants";
+import { isAdminWallet } from "../context/constants";
 import toast from "react-hot-toast";
 
 const Admin = () => {
@@ -20,6 +20,7 @@ const Admin = () => {
     DONATE,
     addtokenToMetaMask,
     TOKEN_ADDRESS,
+    ICO_ADDRESS,
   } = useContext(TOKEN_ICO_Context);
 
   const [tokenDetails, setTokenDetails] = useState(null);
@@ -34,6 +35,14 @@ const Admin = () => {
   const [tokenTransferAddress, setTokenTransferAddress] = useState("");
   const [donateAmount, setDonateAmount] = useState("");
   const [refreshInterval, setRefreshInterval] = useState(5);
+  const [intervalOpen, setIntervalOpen] = useState(false);
+  const intervalRef = useRef(null);
+  const intervalChoices = [
+    { value: 5, label: "5s" },
+    { value: 10, label: "10s" },
+    { value: 30, label: "30s" },
+    { value: 60, label: "1m" },
+  ];
   const [participantCount, setParticipantCount] = useState(null);
   const [participantAddresses, setParticipantAddresses] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(false);
@@ -77,18 +86,38 @@ const Admin = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!intervalOpen) return undefined;
+    const close = (event) => {
+      if (!intervalRef.current?.contains(event.target)) setIntervalOpen(false);
+    };
+    const onKey = (event) => {
+      if (event.key === "Escape") setIntervalOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [intervalOpen]);
+
+  const admin = isAdminWallet(account);
+
   // Auto-refresh token data
   useEffect(() => {
-    if (!publicClient) return;
+    if (!publicClient || !admin) return;
     fetchTokenData();
     const interval = setInterval(fetchTokenData, refreshInterval * 1000);
     return () => clearInterval(interval);
-  }, [refreshInterval, publicClient]);
+  }, [refreshInterval, publicClient, admin]);
 
   useEffect(() => {
     const fetchParticipants = async () => {
       if (
+        !admin ||
         !publicClient ||
+        !ICO_ADDRESS ||
         !tokenDetails?.tokenAddr ||
         tokenDetails.tokenAddr === ethers.constants.AddressZero
       )
@@ -97,14 +126,28 @@ const Admin = () => {
       setEventsLoading(true);
       try {
         const transferTopic = ethers.utils.id("Transfer(address,address,uint256)");
-        const logs = await publicClient.getLogs({
-          address: tokenDetails.tokenAddr,
-          topics: [
-            transferTopic,
-            ethers.utils.hexZeroPad(CONTRACT_ADDRESS, 32),
-          ],
-          fromBlock: 0,
-        });
+        const latest = await publicClient.getBlockNumber();
+        const windows = [50000n, 10000n, 2000n];
+        let logs = null;
+        let lastError;
+        for (const span of windows) {
+          try {
+            const fromBlock = latest > span ? latest - span : 0n;
+            logs = await publicClient.getLogs({
+              address: tokenDetails.tokenAddr,
+              topics: [
+                transferTopic,
+                ethers.utils.hexZeroPad(ICO_ADDRESS, 32),
+              ],
+              fromBlock,
+              toBlock: latest,
+            });
+            break;
+          } catch (error) {
+            lastError = error;
+          }
+        }
+        if (!logs) throw lastError || new Error("Buyer logs unavailable");
 
         const addresses = new Set();
         logs.forEach((log) => {
@@ -125,7 +168,7 @@ const Admin = () => {
     };
 
     fetchParticipants();
-  }, [tokenDetails?.tokenAddr, publicClient]);
+  }, [tokenDetails?.tokenAddr, publicClient, ICO_ADDRESS, admin]);
 
   const handleUpdatePrice = async () => {
     if (!newPrice) {
@@ -218,7 +261,7 @@ const Admin = () => {
   };
 
   const openTools = () => {
-    // Owner-only tools are available inside the admin dashboard.
+    window.location.href = "/";
   };
 
   const renderShell = (content) => (
@@ -241,8 +284,18 @@ const Admin = () => {
     return renderShell(
       <div className="admin-empty-state">
         <div className="admin-message-card">
-          <h1>Admin Dashboard</h1>
-          <p>Please connect the owner wallet to access admin features.</p>
+          <h1>Admin</h1>
+          <p>Connect the admin wallet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!admin) {
+    return renderShell(
+      <div className="admin-empty-state">
+        <div className="admin-message-card">
+          <h1>You are not the admin.</h1>
         </div>
       </div>
     );
@@ -274,29 +327,6 @@ const Admin = () => {
   }
 
   const connectedWallet = account ? account.toLowerCase() : null;
-  const contractOwner = tokenDetails?.owner;
-  const expectedOwner = contractOwner || OWNER_ADDRESS.toLowerCase();
-  const isOwner =
-    connectedWallet &&
-    (connectedWallet === expectedOwner || connectedWallet === OWNER_ADDRESS.toLowerCase());
-
-  if (!isOwner) {
-    return renderShell(
-      <div className="admin-message-card">
-        <h1>Admin Access Denied</h1>
-        <p>Only the contract owner can access this portal. Make sure the wallet is connected and on the correct network.</p>
-        <div className="admin-deny-details">
-          <p>
-            Connected: {account}
-            <br />
-            Contract Owner: {contractOwner || "Unavailable"}
-            <br />
-            Configured Owner: {OWNER_ADDRESS}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   const tokenBal = Number(tokenDetails.tokenBal) || 0;
   const soldTokens = Number(tokenDetails.soldTokens) || 0;
@@ -306,6 +336,8 @@ const Admin = () => {
   const soldPercentage = totalSupply ? ((soldTokens / totalSupply) * 100).toFixed(2) : 0;
   const holdingsValue = liveEthPrice ? (tokenBal * tokenPrice * liveEthPrice).toFixed(2) : "N/A";
   const soldValue = liveEthPrice ? (soldTokens * tokenPrice * liveEthPrice).toFixed(2) : "N/A";
+  const contractEth = Number(tokenDetails.maticBal);
+  const contractEthLabel = Number.isFinite(contractEth) ? contractEth.toFixed(4) : "0.0000";
   return renderShell(
     <div className="admin-page">
       <div className="admin-header">
@@ -314,12 +346,37 @@ const Admin = () => {
         <div className="admin-controls">
           <label>
             Auto-refresh interval:
-            <select value={refreshInterval} onChange={(e) => setRefreshInterval(Number(e.target.value))}>
-              <option value={5}>5s</option>
-              <option value={10}>10s</option>
-              <option value={30}>30s</option>
-              <option value={60}>1m</option>
-            </select>
+            <span className="interval-menu" ref={intervalRef}>
+              <button
+                type="button"
+                className="refresh-btn interval-trigger"
+                aria-haspopup="listbox"
+                aria-expanded={intervalOpen}
+                onClick={() => setIntervalOpen((open) => !open)}
+              >
+                {intervalChoices.find((item) => item.value === refreshInterval)?.label}
+              </button>
+              {intervalOpen && (
+                <ul className="interval-list" role="listbox">
+                  {intervalChoices.map((item) => (
+                    <li key={item.value}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={item.value === refreshInterval}
+                        className={item.value === refreshInterval ? "is-active" : ""}
+                        onClick={() => {
+                          setRefreshInterval(item.value);
+                          setIntervalOpen(false);
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </span>
           </label>
           <button onClick={fetchTokenData} className="refresh-btn">
             Refresh Now
@@ -370,7 +427,7 @@ const Admin = () => {
               </div>
               <div className="metric-card">
                 <span className="metric-label">Wallet Balance (ETH)</span>
-                <span className="metric-value">{tokenDetails.maticBal}</span>
+                <span className="metric-value">{contractEthLabel}</span>
               </div>
             </div>
 
@@ -462,13 +519,19 @@ const Admin = () => {
 
               <div className="analytics-card">
                 <h4>Total Raised</h4>
-                <p className="large-value">{totalRaisedEth} ETH</p>
+                <p className="large-value">
+                  {totalRaisedEth}
+                  <span className="eth-unit"> ETH</span>
+                </p>
                 <p className="subtitle">{soldTokens} tokens × {tokenPrice} ETH</p>
               </div>
 
               <div className="analytics-card">
                 <h4>Contract Balance</h4>
-                <p className="value">{tokenDetails.maticBal} ETH</p>
+                <p className="value">
+                  {contractEthLabel}
+                  <span className="eth-unit"> ETH</span>
+                </p>
                 <p className="subtitle">Available for operations</p>
               </div>
 
@@ -554,7 +617,10 @@ const Admin = () => {
                     value={newTokenAddress}
                     onChange={(e) => setNewTokenAddress(e.target.value)}
                   />
-                  <p className="info-text">Current: {tokenDetails.tokenAddr}</p>
+                  <p className="info-text">
+                    Current
+                    <span className="mono-addr">{tokenDetails.tokenAddr || "Not set"}</span>
+                  </p>
                   <button onClick={handleUpdateToken} disabled={loader}>
                     {loader ? "Updating..." : "Update Address"}
                   </button>
@@ -669,7 +735,10 @@ const Admin = () => {
                 <h3>Add ICO Token</h3>
                 <p>Add the current token address to MetaMask</p>
                 <div className="form-group">
-                  <p className="info-text">Token address: {TOKEN_ADDRESS}</p>
+                  <p className="info-text">
+                    Token address
+                    <span className="mono-addr">{TOKEN_ADDRESS}</span>
+                  </p>
                   <button onClick={handleAddTokenToWallet} disabled={loader}>
                     Add Token to Wallet
                   </button>

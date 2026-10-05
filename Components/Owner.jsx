@@ -13,8 +13,21 @@ const Owner = ({
   setOpenUpdatePrice,
   setOpenUpdateAddress,
 }) => {
+  const isOwner =
+    account &&
+    detail?.owner &&
+    account.toLowerCase() === String(detail.owner).toLowerCase();
+  const balanceLabel = detail?.maticBal
+    ? `${Number(detail.maticBal).toFixed(4)} ${currency}`
+    : `0.0000 ${currency}`;
+
   return (
-    <section className="team pos-rel ">
+    <section
+      className="team pos-rel tool-modal"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) setOwnerModel(false);
+      }}
+    >
       <div className="container">
         <div className="ico-contact__wrap new-owner">
           <div className="popup-header">
@@ -32,9 +45,7 @@ const Owner = ({
 
           <div className="team__wrap ul_li tools-grid">
           <div className="team__item">
-            <div className="avatar">
-              <img src="assets/img/shape/c_shape1.png" alt="" />
-            </div>
+            <div className="avatar tool-glyph">⇄</div>
 
             <div className="team__info text-center mb-20">
               <h3>TOKEN TRANSFER</h3>
@@ -54,15 +65,11 @@ const Owner = ({
             </div>
           </div>
           <div className="team__item">
-            <div className="avatar">
-              <img src="assets/img/token/t_info_img.png" alt="" />
-            </div>
+            <div className="avatar tool-glyph">Ξ</div>
 
             <div className="team__info text-center mb-20">
               <h3>TRANSFER FUND</h3>
-              <span>
-                {detail?.maticBal.slice(0, 6)} {currency}
-              </span>
+              <span>{balanceLabel}</span>
             </div>
 
             <div className="team__social ul_li_center">
@@ -80,9 +87,7 @@ const Owner = ({
             </div>
           </div>
           <div className="team__item">
-            <div className="avatar">
-              <img src="assets/img/shape/c_shape2.png" alt="" />
-            </div>
+            <div className="avatar tool-glyph">♥</div>
 
             <div className="team__info text-center mb-20">
               <h3>DONATE FUND</h3>
@@ -102,12 +107,10 @@ const Owner = ({
             </div>
           </div>
 
-          {account == detail?.owner && (
+          {isOwner && (
             <>
               <div className="team__item">
-                <div className="avatar">
-                  <img src="assets/img/token/t_info_img.png" alt="" />
-                </div>
+                <div className="avatar tool-glyph">↓</div>
 
                 <div className="team__info text-center mb-20">
                   <h3>WITHDRAW</h3>
@@ -128,9 +131,7 @@ const Owner = ({
               </div>
 
               <div className="team__item">
-                <div className="avatar">
-                  <img src="assets/img/token/t_info_img.png" alt="" />
-                </div>
+                <div className="avatar tool-glyph">T</div>
 
                 <div className="team__info text-center mb-20">
                   <h3>UPDATE TOKEN</h3>
@@ -153,9 +154,7 @@ const Owner = ({
               </div>
 
               <div className="team__item">
-                <div className="avatar">
-                  <img src="assets/img/token/t_info_img.png" alt="" />
-                </div>
+                <div className="avatar tool-glyph">$</div>
 
                 <div className="team__info text-center mb-20">
                   <h3>UPDATE TOKEN PRICE</h3>
@@ -182,15 +181,6 @@ const Owner = ({
         </div>
       </div>
 
-      <div className="team__shape">
-        <div className="shape shape--1">
-          <img src="assets/img/shape/t_shape1.png" alt="" />
-        </div>
-
-        <div className="shape shape--2">
-          <img src="assets/img/shape/t_shape2.png" alt="" />
-        </div>
-      </div>
     </section>
   );
 };

@@ -5,164 +5,214 @@ const Hero = ({
   setBuyModel,
   account,
   CONNECT_WALLET,
-  setAccount,
   setLoader,
   detail,
   addtokenToMetaMask,
   setKycModel,
   kycVerified,
+  deploySale,
+  saleReady,
 }) => {
-  const notifySuccess = (msg) => toast.success(msg, { duration: 2000 });
-  const notifyError = (msg) => toast.error(msg, { duration: 2000 });
-
-  const connectWallet = async () => {
-    setLoader(true);
-    const address = await CONNECT_WALLET();
-    setAccount(address);
-  };
-
   const [percentage, setPercentage] = useState(0);
   const [animatedSold, setAnimatedSold] = useState(0);
   const [animatedTotal, setAnimatedTotal] = useState(0);
+  const [qty, setQty] = useState(250);
+
+  const onPointer = (event) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty("--mx", `${event.clientX - bounds.left}px`);
+    event.currentTarget.style.setProperty("--my", `${event.clientY - bounds.top}px`);
+  };
+
+  const connectWallet = () => {
+    CONNECT_WALLET();
+  };
+
+  const startPurchase = () => {
+    if (!kycVerified) {
+      toast.error("Sign the identity check before you buy.");
+      setKycModel(true);
+      return;
+    }
+    setBuyModel(true);
+  };
+
+  const liveRound = Boolean(detail && !detail.offline);
+  const soldTarget = liveRound ? Number(detail?.soldTokens) || 0 : 184250;
+  const totalTarget = soldTarget + (liveRound ? Number(detail?.tokenBal) || 0 : 815750);
 
   useEffect(() => {
-    const sold = Number(detail?.soldTokens) || 0;
-    const available = Number(detail?.tokenBal || 0) || 0;
-    const total = sold + available;
-    const percentageNew = total ? (sold / total) * 100 : 0;
-
+    const percentageNew = totalTarget ? (soldTarget / totalTarget) * 100 : 0;
     setPercentage(percentageNew);
 
-    const animateValue = (from, to, setter, duration = 800) => {
+    const animateValue = (from, to, setter, duration = 900) => {
       const start = performance.now();
       const step = (timestamp) => {
         const progress = Math.min((timestamp - start) / duration, 1);
-        setter(Math.round(from + (to - from) * progress));
-        if (progress < 1) {
-          requestAnimationFrame(step);
-        }
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setter(Math.round(from + (to - from) * eased));
+        if (progress < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
     };
 
-    animateValue(animatedSold, sold, setAnimatedSold);
-    animateValue(animatedTotal, total, setAnimatedTotal);
-  }, [detail]);
+    animateValue(0, soldTarget, setAnimatedSold);
+    animateValue(0, totalTarget, setAnimatedTotal);
+  }, [soldTarget, totalTarget]);
 
-  const ADD_TOKEN_METAMASK = async () => {
+  const addToken = async () => {
     setLoader(true);
     const response = await addtokenToMetaMask();
     setLoader(false);
-    notifySuccess(response);
+    if (response) toast.success(response);
   };
 
-  return (
-    <section className="hero hero__ico pos-rel">
-      <div
-        className="hero__bg"
-        style={{
-          backgroundImage: "url(/assets/img/bg/sb_btn_bg.svg)",
-        }}
-      />
+  const price = Number(detail?.tokenPrice);
+  const livePrice = Boolean(detail && !detail.offline && Number.isFinite(price) && price > 0);
+  const unit = livePrice ? price : 0.001;
+  const quote = (qty * unit).toFixed(4);
+  const priceLabel = !detail
+    ? "Syncing…"
+    : detail.offline
+    ? "Example · 0.001 ETH"
+    : Number.isFinite(price)
+    ? `${price} ETH`
+    : "Syncing…";
 
+  return (
+    <section className="hero hero__ico pos-rel" id="home" onMouseMove={onPointer}>
+      <div className="hero-glow" />
       <div className="container">
-        <div className="row">
+        <div className="row align-items-center">
           <div className="col-lg-7">
-            <div className="hero__content">
+            <div className="hero__content hero-copy">
+              <span className="eyebrow">Example sale · Atharv Chavan</span>
               <h1 className="title mb-45">
-                Participate in the <span>Ongoing ICO Token</span> Sale
+                Buy the token.
+                <span> Own the round.</span>
               </h1>
+              <p className="hero-lead">
+                Connect a wallet on Sepolia, complete a short KYC check, and purchase
+                tokens with faucet ETH. Real ETH is not used. Price and supply
+                update from the test network.
+              </p>
 
               <div className="btns">
+                {!saleReady && (
+                  <a className="thm-btn" onClick={deploySale}>
+                    Deploy sale
+                  </a>
+                )}
                 {account ? (
                   <>
                     <a
                       className="thm-btn"
                       onClick={() => setKycModel(true)}
-                      style={kycVerified ? { opacity: 0.6, pointerEvents: "none" } : {}}
+                      style={kycVerified ? { opacity: 0.7, pointerEvents: "none" } : {}}
                     >
                       {kycVerified ? "KYC Verified" : "Complete KYC"}
                     </a>
-
-                    <a className="thm-btn" onClick={() => setBuyModel(true)}>
-                      PURCHASE TOKEN
+                    <a className="thm-btn" onClick={startPurchase}>
+                      {kycVerified ? "Purchase Token" : "Verify to buy"}
                     </a>
                   </>
                 ) : (
-                  <a className="thm-btn" onClick={() => connectWallet()}>
+                  <a className="thm-btn" onClick={connectWallet}>
                     Connect Wallet
                   </a>
                 )}
+                <a className="thm-btn thm-btn--dark" onClick={addToken}>
+                  Add to MetaMask
+                </a>
                 <a
                   className="thm-btn thm-btn--dark"
-                  onClick={() => ADD_TOKEN_METAMASK()}
+                  href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia"
+                  target="_blank"
+                  rel="noreferrer"
                 >
-                  Add MetaMask
+                  Get test ETH
                 </a>
               </div>
 
               <div className="hero__progress mt-50">
                 <div className="progress-title ul_li_between">
                   <span>
-                    <span>Raised -</span> {animatedSold} Tokens
+                    <span>{liveRound ? "Raised — " : "Sample raised — "}</span>
+                    {animatedSold.toLocaleString()} tokens
                   </span>
                   <span>
-                    <span>Total ICO -</span>{" "}
-                    {animatedTotal} {detail?.symbol}
+                    <span>{liveRound ? "Round size — " : "Sample size — "}</span>
+                    {animatedTotal.toLocaleString()} {detail?.symbol || ""}
                   </span>
                 </div>
-
                 <div className="progress">
                   <div
                     className="progress-bar"
                     role="progressbar"
-                    style={{
-                      width: `${percentage ?? 0}%`,
-                    }}
+                    style={{ width: `${Math.min(percentage, 100)}%` }}
                   />
                 </div>
-
                 <ul className="ul_li_between">
-                  <li>Pre Sell</li>
-                  <li>Soft Cap</li>
+                  <li>Pre-sale</li>
+                  <li>Soft cap</li>
                   <li>Bonus</li>
                 </ul>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="hero__shape">
-        <div className="shape shape--1">
-          <img src="assets/img/shape/h_shape.png" alt="" />
-        </div>
-        <div className="shape shape--2">
-          <img src="assets/img/shape/h_shape2.png" alt="" />
-        </div>
-        <div className="shape shape--3">
-          <img src="assets/img/shape/h_shape3.png" alt="" />
-        </div>
-      </div>
-
-      <div className="hero__coin">
-        <div className="coin coin--1">
-          <img src="assets/img/icon/coin1.png" alt="" />
-        </div>
-        <div className="coin coin--2">
-          <img src="assets/img/icon/coin2.png" alt="" />
-        </div>
-        <div className="coin coin--3">
-          <img src="assets/img/icon/coin3.png" alt="" />
-        </div>
-        <div className="coin coin--4">
-          <img src="assets/img/icon/coin4.png" alt="" />
-        </div>
-        <div className="coin coin--5">
-          <img src="assets/img/icon/coin5.png" alt="" />
-        </div>
-        <div className="coin coin--6">
-          <img src="assets/img/icon/coin6.png" alt="" />
+          <div className="col-lg-5">
+            <div className="sale-card">
+              <div className="orbit" aria-hidden="true">
+                <span className="orb orb-1">Ξ</span>
+                <span className="orb orb-2">◆</span>
+                <span className="orb orb-3">◎</span>
+              </div>
+              <p className="sale-card__label">Token price</p>
+              <h2>{priceLabel}</h2>
+              <ul>
+                <li>
+                  <span>Name</span>
+                  <strong>{detail?.offline ? "RPC offline" : detail?.name || "Loading"}</strong>
+                </li>
+                <li>
+                  <span>Symbol</span>
+                  <strong>{detail?.symbol || "—"}</strong>
+                </li>
+                <li>
+                  <span>Available</span>
+                  <strong>
+                    {!detail || detail.offline
+                      ? "—"
+                      : Number(detail.tokenBal || 0).toLocaleString()}
+                  </strong>
+                </li>
+                <li>
+                  <span>Network</span>
+                  <strong>Sepolia</strong>
+                </li>
+              </ul>
+              <div className="quote">
+                <div className="quote__head">
+                  <span>{livePrice ? "Live quote" : "Example quote"}</span>
+                  <strong>Atharv Chavan</strong>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="5000"
+                  step="10"
+                  value={qty}
+                  aria-label="Example token amount"
+                  onChange={(event) => setQty(Number(event.target.value))}
+                />
+                <p>
+                  {qty.toLocaleString()} tokens
+                  <b>{quote} ETH</b>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

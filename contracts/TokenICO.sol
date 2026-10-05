@@ -23,8 +23,10 @@ contract TokenICO {
         _;
     }
 
-    constructor(){
+    constructor(address _tokenAddress, uint256 _tokenSalePrice) {
         owner = msg.sender;
+        tokenAddress = _tokenAddress;
+        tokenSalePrice = _tokenSalePrice;
     }
 
     function updateToken(address _tokenAddress) public onlyOwner {

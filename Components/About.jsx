@@ -1,68 +1,69 @@
 import React from "react";
+import Reveal from "./Reveal";
 
 const About = () => {
+  const points = [
+    "Decentralized sale",
+    "Rewards mechanism",
+    "On-chain transparency",
+    "Investor protection",
+    "Phased token release",
+    "Wallet-native checkout",
+  ];
+
   return (
     <section id="about" className="about pos-rel pb-140">
       <div className="container">
-        <div className="row align-items-center mt-none-30">
-          <div className="col-lg-6 mt-30">
-            <div className="about__img pos-rel wow fadeInLeft">
-              <img src="assets/img/logo/logo.svg" alt="" />
-              <div className="about__shape">
-                <img src="assets/img/icon/s_01.svg" alt="" />
+        <div className="row align-items-center">
+          <div className="col-lg-6">
+            <Reveal>
+              <div className="about-stage">
+                <div className="about-stage__ring" />
+                <div className="about-stage__card">
+                  <span>01</span>
+                  <h3>Connect</h3>
+                  <p>RainbowKit opens MetaMask or WalletConnect on Sepolia.</p>
+                </div>
+                <div className="about-stage__card about-stage__card--shift">
+                  <span>02</span>
+                  <h3>Verify</h3>
+                  <p>A short KYC check is stored locally for this wallet.</p>
+                </div>
+                <div className="about-stage__card">
+                  <span>03</span>
+                  <h3>Buy</h3>
+                  <p>ETH goes to the sale contract. Tokens come back to you.</p>
+                </div>
               </div>
-            </div>
+            </Reveal>
           </div>
-          <div className="col-lg-6 mt-30">
-            <div
-              className="about__content wow fadeInRight"
-              data-wow-delay="100ms"
-            >
-              <div className="sec-title mb-35">
-                <h5 className="sec-title__subtitle">WHAT IS ICO CRYPTO</h5>
-                <h2 className="sec-title__title mb-25">
-                  Initial Coin Offering (ICO) is a fundraising method used by blockchain projects to raise capital by selling digital tokens to investors. These tokens can represent utility, access to a platform, or future value within the ecosystem.
-                </h2>
-                <p>
-                Through an ICO, early supporters can invest in a project before it launches publicly. The funds raised are used to develop the platform, expand the ecosystem, and bring innovative blockchain solutions to the market.
-
-Our ICO focuses on building a transparent, decentralized platform where investors and users can participate in the growth of the ecosystem while benefiting from token rewards and future utility.
-                </p>
+          <div className="col-lg-6">
+            <Reveal delay={120}>
+              <div className="about__content">
+                <div className="sec-title mb-35">
+                  <h5 className="sec-title__subtitle">What this ICO is</h5>
+                  <h2 className="sec-title__title mb-25">
+                    A public token sale you can join from your wallet.
+                  </h2>
+                  <p>
+                    An initial coin offering lets a project raise funds by selling
+                    a digital token before a wider launch. This platform wires that
+                    flow end to end: the sale contract prices the token, accepts
+                    ETH, and transfers the ERC-20 balance in the same transaction.
+                  </p>
+                </div>
+                <ul className="about__list ul_li">
+                  {points.map((item) => (
+                    <li key={item}>
+                      <img src="/assets/img/icon/a_arrow.svg" alt="" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
-
-              <ul className="about__list ul_li">
-                <li>
-                  <img src="assets/img/icon/a_arrow.svg" alt="" />
-                  Decentralized Platform
-                </li>
-                <li>
-                  <img src="assets/img/icon/a_arrow.svg" alt="" />
-                  Rewards Meachanism
-                </li>
-                <li>
-                  <img src="assets/img/icon/a_arrow.svg" alt="" />
-                  Crowd Wisdom
-                </li>
-                <li>
-                  <img src="assets/img/icon/a_arrow.svg" alt="" />
-                  Investor Protection
-                </li>
-                <li>
-                  <img src="assets/img/icon/a_arrow.svg" alt="" />
-                  Token Sale Phases
-                </li>
-                <li>
-                  <img src="assets/img/icon/a_arrow.svg" alt="" />
-                  Exchange Listing
-                </li>
-              </ul>
-            </div>
+            </Reveal>
           </div>
         </div>
-      </div>
-
-      <div className="about__sec-shape">
-        <img src="assets/img/icon/s_02.svg" alt="" />
       </div>
     </section>
   );

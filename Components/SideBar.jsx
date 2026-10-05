@@ -1,63 +1,48 @@
 import React from "react";
+import Link from "next/link";
 
-const SideBar = ({ setOwnerModel, ownerModel, openTools }) => {
+const SideBar = ({ open, onClose, openTools, setOwnerModel, ownerModel, goAdmin, showAdmin }) => {
+  const openOwnerTools = () => {
+    onClose?.();
+    if (typeof openTools === "function") {
+      openTools();
+      return;
+    }
+    if (typeof setOwnerModel === "function") {
+      setOwnerModel(!ownerModel);
+      return;
+    }
+    window.location.href = "/";
+  };
+
   return (
-    <aside className="slide-bar">
-      <div className="close-mobile-menu">
-        <a href="/" className="tx-close"></a>
-      </div>
-
-      <nav className="side-mobile-menu">
-        <a href="/" className="header__logo mb-30">
-          <img src="assets/img/logo/logo.svg" alt="" />
-        </a>
-        <div className="header-mobile-search">
-          <form action="#" role="search">
-            <input type="text" placeholder="Search Keywords" />
-            <button type="submit">
-              <i className="ti-search" />
-            </button>
-          </form>
+    <>
+      <div className={`nav-backdrop ${open ? "is-on" : ""}`} onClick={onClose} />
+      <aside className={`mobile-drawer ${open ? "is-on" : ""}`} aria-hidden={!open}>
+        <div className="mobile-drawer__head">
+          <Link href="/" onClick={onClose}>
+            <img src="/assets/img/logo/logo.svg" alt="ICO logo" />
+          </Link>
+          <button type="button" className="popup-close" onClick={onClose} aria-label="Close menu">
+            ×
+          </button>
         </div>
-
-        <ul id="mobile-menu-active" className="mobile-menu-active metismenu">
-          <li>
-            <a href="/">Home</a>
-          </li>
-          <li>
-            <a href="#about" className="scrollspy-btn">
-              About
-            </a>
-          </li>
-          <li>
-            <a href="#roadmap" className="scrollspy-btn">
-              RoadMap
-            </a>
-          </li>
-          <li>
-            <a href="#!" className="">
-              Blog
-            </a>
-          </li>
-          <li>
-            <a href="#!" className="">
-              Get In touch
-            </a>
-          </li>
-          <li>
-            <a
-              className="scrollspy-btn"
-              style={{
-                cursor: "pointer",
-              }}
-              onClick={openTools ?? (() => (ownerModel ? setOwnerModel(false) : setOwnerModel(true)))}
-            >
-              Tools
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </aside>
+        <nav>
+          <Link href="/" onClick={onClose}>Home</Link>
+          <Link href="/#about" onClick={onClose}>About</Link>
+          <Link href="/#token" onClick={onClose}>Token</Link>
+          <Link href="/#roadmap" onClick={onClose}>Roadmap</Link>
+          <Link href="/#team" onClick={onClose}>Team</Link>
+          <Link href="/#faq" onClick={onClose}>FAQ</Link>
+          <Link href="/#contact" onClick={onClose}>Contact</Link>
+          <button type="button" onClick={openOwnerTools}>Tools</button>
+          <Link href="/investor" onClick={onClose}>Investor</Link>
+          {showAdmin && (
+            <button type="button" onClick={() => { onClose?.(); goAdmin?.(); }}>Admin</button>
+          )}
+        </nav>
+      </aside>
+    </>
   );
 };
 

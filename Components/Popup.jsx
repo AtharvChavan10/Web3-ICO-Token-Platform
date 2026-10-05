@@ -4,6 +4,8 @@ import { shortenAddress } from "../Utils/index";
 
 const Popup = ({
   setBuyModel,
+  setKycModel,
+  kycVerified,
   BUY_TOKEN,
   currency,
   detail,
@@ -34,6 +36,13 @@ const Popup = ({
   const handleBuyClick = () => {
     if (!account) {
       toast.error("Connect your wallet to buy tokens.");
+      return;
+    }
+
+    if (!kycVerified) {
+      toast.error("Authenticate with KYC before you buy.");
+      setBuyModel(false);
+      setKycModel?.(true);
       return;
     }
 
@@ -86,7 +95,12 @@ const Popup = ({
   }, []);
 
   return (
-    <section className="new-margin ico-contact pos-rel">
+    <section
+      className="new-margin ico-contact pos-rel"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) setBuyModel(false);
+      }}
+    >
       <div className="container">
         <div className="ico-contact__wrap">
           <div className="popup-header">
@@ -154,30 +168,6 @@ const Popup = ({
             </div>
           </div>
 
-          <div className="ico-contact__shape-img">
-            <div className="shape shape--1">
-              <div className="">
-                <img src="assets/img/shape/c_shape1.png" alt="" />
-              </div>
-            </div>
-            <div className="shape shape--2">
-              <div className="">
-                <img src="assets/img/shape/c_shape2.png" alt="" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="ico-contact__shape">
-        <div className="shape shape--1">
-          <img src="assets/img/shape/c_shape1.png" alt="" />
-        </div>
-        <div className="shape shape--2">
-          <img src="assets/img/shape/c_shape2.png" alt="" />
-        </div>
-        <div className="shape shape--3">
-          <img src="assets/img/shape/c_shape3.png" alt="" />
         </div>
       </div>
     </section>

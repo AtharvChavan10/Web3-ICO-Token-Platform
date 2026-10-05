@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ethers } from "ethers";
+import { parseEther, parseUnits } from "viem";
+import saleArtifacts from "./saleArtifacts.json";
 import toast from "react-hot-toast";
-import { useAccount, useWalletClient, usePublicClient } from "wagmi";
+import { useAccount, useWalletClient, usePublicClient, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { readKyc } from "../Utils/kyc";
 
 import {
   GET_BALANCE,
@@ -21,18 +24,28 @@ export const TOKEN_ICO_Context = React.createContext();
 export const TOKEN_ICO_Provider = ({ children }) => {
   const DAPP_NAME = "TOKEN ICO DAPP";
   const currency = "ETH";
-  const network = "Holesky";
+  const network = "Sepolia";
+  const SEPOLIA_ID = 11155111;
 
   const [loader, setLoader] = useState(false);
   const [account, setAccount] = useState();
   const [count, setCount] = useState(0);
   const [kycVerified, setKycVerified] = useState(false);
   const [transactions, setTransactions] = useState([]);
+  const [deployed, setDeployed] = useState(null);
 
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
+  const publicClientRef = useRef(publicClient);
+  publicClientRef.current = publicClient;
   const { openConnectModal } = useConnectModal();
+  const { switchChainAsync } = useSwitchChain();
+
+  const SEPOLIA_RPCS = [
+    "https://ethereum-sepolia-rpc.publicnode.com",
+    "https://1rpc.io/sepolia",
+  ];
 
   let signer = null;
   if (walletClient) {
@@ -46,7 +59,18 @@ export const TOKEN_ICO_Provider = ({ children }) => {
     signer = provider.getSigner(account.address);
   }
 
-  const contract = signer ? new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer) : null;
+  const icoAddress = deployed?.ico || null;
+  const activeToken = deployed?.token || TOKEN_ADDRESS;
+  const contract = signer && icoAddress ? new ethers.Contract(icoAddress, CONTRACT_ABI, signer) : null;
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sepolia-sale");
+      if (saved) setDeployed(JSON.parse(saved));
+    } catch (error) {
+      setDeployed(null);
+    }
+  }, []);
 
   useEffect(() => {
     setAccount(address);
@@ -57,9 +81,7 @@ export const TOKEN_ICO_Provider = ({ children }) => {
       return;
     }
 
-    const verified =
-      localStorage.getItem(`kycVerified:${address.toLowerCase()}`) === "true";
-    setKycVerified(verified);
+    setKycVerified(Boolean(readKyc(address)));
 
     // Load transaction history from localStorage
     const storedTx = localStorage.getItem(`transactions:${address.toLowerCase()}`);
@@ -82,6 +104,62 @@ export const TOKEN_ICO_Provider = ({ children }) => {
   };
 
   //--- CONTRACT FUNCTION ---
+  const withTimeout = (promise, ms = 7000) =>
+    Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error("RPC timeout")), ms)),
+    ]);
+
+  const readSaleSnapshot = async () => {
+    const pull = async (reader) => {
+      const contractOwner = await reader.owner();
+      const soldTokens = await reader.soldTokens();
+      const tokenAddress = await reader.tokenAddress();
+      const tokenPrice = await reader.tokenSalePrice();
+      let tokenDetails = null;
+      if (tokenAddress && tokenAddress !== ethers.constants.AddressZero) {
+        tokenDetails = await reader.getTokenDetails();
+      }
+      return { contractOwner, soldTokens, tokenAddress, tokenPrice, tokenDetails };
+    };
+
+    const ico = icoAddress;
+    if (!ico) throw new Error("Sale is not deployed on Sepolia");
+
+    const client = publicClientRef.current;
+    if (client) {
+      try {
+        const reader = {
+          owner: () =>
+            client.readContract({ address: ico, abi: CONTRACT_ABI, functionName: "owner" }),
+          soldTokens: () =>
+            client.readContract({ address: ico, abi: CONTRACT_ABI, functionName: "soldTokens" }),
+          tokenAddress: () =>
+            client.readContract({ address: ico, abi: CONTRACT_ABI, functionName: "tokenAddress" }),
+          tokenSalePrice: () =>
+            client.readContract({ address: ico, abi: CONTRACT_ABI, functionName: "tokenSalePrice" }),
+          getTokenDetails: () =>
+            client.readContract({ address: ico, abi: CONTRACT_ABI, functionName: "getTokenDetails" }),
+        };
+        return await withTimeout(pull(reader), 8000);
+      } catch (error) {
+        console.log("public client sale read failed", error?.message || error);
+      }
+    }
+
+    let lastError;
+    for (const url of SEPOLIA_RPCS) {
+      try {
+        const provider = new ethers.providers.JsonRpcProvider({ url, timeout: 7000 });
+        const reader = new ethers.Contract(ico, CONTRACT_ABI, provider);
+        return await withTimeout(pull(reader), 8000);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError || new Error("No Sepolia RPC responded");
+  };
+
   const TOKEN_ICO = async (options = {}) => {
     const { showLoader = true, toastOnError = true } = options;
     try {
@@ -99,46 +177,23 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         soldTokens = await contract.soldTokens();
         tokenAddress = await contract.tokenAddress();
         tokenPrice = await contract.tokenSalePrice();
-      } else if (publicClient) {
-        contractOwner = await publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: "owner",
-        });
-        soldTokens = await publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: "soldTokens",
-        });
-        tokenAddress = await publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: "tokenAddress",
-        });
-        tokenPrice = await publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: "tokenSalePrice",
-        });
       } else {
-        if (showLoader) setLoader(false);
-        return null;
+        const snapshot = await readSaleSnapshot();
+        contractOwner = snapshot.contractOwner;
+        soldTokens = snapshot.soldTokens;
+        tokenAddress = snapshot.tokenAddress;
+        tokenPrice = snapshot.tokenPrice;
+        tokenDetails = snapshot.tokenDetails;
       }
 
       if (
+        !tokenDetails &&
         tokenAddress &&
-        tokenAddress !== ethers.constants.AddressZero
+        tokenAddress !== ethers.constants.AddressZero &&
+        contract
       ) {
-        if (contract) {
-          tokenDetails = await contract.getTokenDetails();
-        } else {
-          tokenDetails = await publicClient.readContract({
-            address: CONTRACT_ADDRESS,
-            abi: CONTRACT_ABI,
-            functionName: "getTokenDetails",
-          });
-        }
-      } else {
+        tokenDetails = await contract.getTokenDetails();
+      } else if (!tokenDetails) {
         tokenDetails = {
           name: "Not configured",
           symbol: "N/A",
@@ -170,7 +225,7 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         tokenAddr: tokenDetails?.tokenAddr,
         maticBal: ethBal,
         address: address ? address.toLowerCase() : undefined,
-        owner: contractOwner ? contractOwner.toLowerCase() : undefined,
+        owner: contractOwner ? String(contractOwner).toLowerCase() : undefined,
         soldTokens:
           typeof soldTokens?.toNumber === "function"
             ? soldTokens.toNumber()
@@ -180,9 +235,21 @@ export const TOKEN_ICO_Provider = ({ children }) => {
       return token;
     } catch (error) {
       console.log(error);
-      if (toastOnError) notifyError("error try again later");
+      if (toastOnError) notifyError("Sepolia did not return the sale. Check the wallet is on the testnet.");
       if (showLoader) setLoader(false);
-      return null;
+      return {
+        offline: true,
+        tokenBal: "0",
+        name: "Unavailable",
+        symbol: "—",
+        supply: "0",
+        tokenPrice: "0",
+        tokenAddr: activeToken,
+        maticBal: "0",
+        address: address ? address.toLowerCase() : undefined,
+        owner: undefined,
+        soldTokens: 0,
+      };
     }
   };
 
@@ -222,13 +289,32 @@ export const TOKEN_ICO_Provider = ({ children }) => {
   };
 
   const getEtherscanLink = (hash) => {
-    return `https://holesky.etherscan.io/tx/${hash}`;
+    return `https://sepolia.etherscan.io/tx/${hash}`;
+  };
+
+  const ensureTestnet = async () => {
+    const active = walletClient?.chain?.id;
+    if (active === SEPOLIA_ID) return true;
+    try {
+      await switchChainAsync({ chainId: SEPOLIA_ID });
+      notifySuccess("Switched to Sepolia. Use faucet ETH, then try again.");
+    } catch (error) {
+      notifyError("Switch to Sepolia. This sale spends faucet ETH, not real ETH.");
+    }
+    return false;
   };
 
   const BUY_TOKEN = async (amount) => {
     try {
-      if (!isConnected || !address || !contract) {
+      if (!isConnected || !address) {
         notifyError("Please connect your wallet first");
+        return;
+      }
+
+      if (!(await ensureTestnet())) return;
+
+      if (!icoAddress || !contract) {
+        notifyError("Deploy the sale on Sepolia first.");
         return;
       }
 
@@ -279,7 +365,7 @@ export const TOKEN_ICO_Provider = ({ children }) => {
       const balanceBn = ethers.utils.parseUnits(balance.toString(), "ether");
 
       if (balanceBn.lt(payAmount)) {
-        notifyError("Invalid transaction: insufficient wallet funds.");
+        notifyError("Not enough Sepolia ETH. Get some from a faucet, then try again.");
         setLoader(false);
         return;
       }
@@ -344,9 +430,12 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         "Transaction failed. Make sure your wallet has enough funds and try again.";
 
       const isInsufficientFunds = /insufficient funds/i.test(errorMsg);
+      const missingContract = /revert|CALL_EXCEPTION|estimate gas|execution reverted/i.test(errorMsg);
 
-      if (isInsufficientFunds) {
-        notifyError("Invalid transaction: insufficient wallet funds.");
+      if (missingContract && !isInsufficientFunds) {
+        notifyError("The sale contract is not on Sepolia. Faucet ETH is the right money, but this contract still points at the shut-down Holesky network.");
+      } else if (isInsufficientFunds) {
+        notifyError("Not enough Sepolia ETH. Get some from a faucet, then try again.");
       } else {
         notifyError(
           "Invalid transaction. Please check your wallet balance and try again."
@@ -363,6 +452,8 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         notifyError("Please connect your wallet first");
         return;
       }
+
+      if (!(await ensureTestnet())) return;
 
       setLoader(true);
 
@@ -393,6 +484,7 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         notifyError("Please connect your wallet first");
         return;
       }
+      if (!(await ensureTestnet())) return;
 
       setLoader(true);
 
@@ -415,6 +507,7 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         notifyError("Please connect your wallet first");
         return;
       }
+      if (!(await ensureTestnet())) return;
 
       setLoader(true);
       const payAmount = ethers.utils.parseUnits(price.toString(), "ether");
@@ -438,6 +531,7 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         notifyError("Please connect your wallet first");
         return;
       }
+      if (!(await ensureTestnet())) return;
 
       setLoader(true);
       const payAmount = ethers.utils.parseUnits(AMOUNT.toString(), "ether");
@@ -464,6 +558,7 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         notifyError("Please connect your wallet first");
         return;
       }
+      if (!(await ensureTestnet())) return;
 
       setLoader(true);
 
@@ -492,6 +587,7 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         notifyError("Please connect your wallet first");
         return;
       }
+      if (!(await ensureTestnet())) return;
 
       setLoader(true);
 
@@ -508,6 +604,97 @@ export const TOKEN_ICO_Provider = ({ children }) => {
       console.log(error);
       notifyError("Error transferring token");
       setLoader(false);
+    }
+  };
+
+  const DEPLOY_SALE = async () => {
+    if (!address || !walletClient) {
+      notifyError("Connect the Sepolia wallet first");
+      CONNECT_WALLET();
+      return;
+    }
+    if (!(await ensureTestnet())) return;
+
+    const client = publicClientRef.current;
+    if (!client) {
+      notifyError("Sepolia is still connecting. Try again in a moment.");
+      return;
+    }
+
+    setLoader(true);
+    try {
+      notifySuccess("Confirm the token in MetaMask");
+      const tokenHash = await walletClient.deployContract({
+        abi: saleArtifacts.token.abi,
+        bytecode: saleArtifacts.token.bytecode,
+        account: address,
+      });
+      const tokenReceipt = await client.waitForTransactionReceipt({ hash: tokenHash });
+      const token = tokenReceipt.contractAddress;
+      if (!token) throw new Error("Token deploy failed");
+
+      notifySuccess("Confirm the sale contract in MetaMask");
+      const saleHash = await walletClient.deployContract({
+        abi: saleArtifacts.sale.abi,
+        bytecode: saleArtifacts.sale.bytecode,
+        args: [token, parseEther("0.001")],
+        account: address,
+      });
+      const saleReceipt = await client.waitForTransactionReceipt({ hash: saleHash });
+      const ico = saleReceipt.contractAddress;
+      if (!ico) throw new Error("Sale deploy failed");
+
+      notifySuccess("Confirm sending 1,000,000 tokens into the sale");
+      const fundHash = await walletClient.writeContract({
+        address: token,
+        abi: saleArtifacts.token.abi,
+        functionName: "transfer",
+        args: [ico, parseUnits("1000000", 18)],
+        account: address,
+      });
+      await client.waitForTransactionReceipt({ hash: fundHash });
+
+      const record = { token, ico, owner: address.toLowerCase() };
+      localStorage.setItem("sepolia-sale", JSON.stringify(record));
+      setDeployed(record);
+      setLoader(false);
+      notifySuccess("Sale is live on Sepolia at 0.001 ETH");
+      setTimeout(() => window.location.reload(), 1200);
+      return record;
+    } catch (error) {
+      console.log(error);
+      setLoader(false);
+      const message = error?.shortMessage || error?.message || "Deploy was cancelled";
+      if (/insufficient funds/i.test(message)) {
+        notifyError("Not enough Sepolia ETH. Use Get test ETH, then deploy again.");
+      } else if (/reject|denied|cancel/i.test(message)) {
+        notifyError("MetaMask cancelled the deploy. The sale is not live yet.");
+      } else {
+        notifyError(message);
+      }
+    }
+  };
+
+  const addDeployedToken = async () => {
+    if (!window.ethereum) return "MetaMask is not installed";
+    const token = activeToken;
+    if (!deployed?.token) return "Deploy the sale before adding the token";
+    try {
+      const wasAdded = await window.ethereum.request({
+        method: "wallet_watchAsset",
+        params: {
+          type: "ERC20",
+          options: {
+            address: token,
+            symbol: "TBC",
+            decimals: 18,
+          },
+        },
+      });
+      return wasAdded ? "Token added!" : "Token not added";
+    } catch (error) {
+      console.log(error);
+      return "failed to add";
     }
   };
 
@@ -541,8 +728,11 @@ export const TOKEN_ICO_Provider = ({ children }) => {
         CHECK_ACCOUNT_BALANCE,
         setAccount,
         setLoader,
-        addtokenToMetaMask,
-        TOKEN_ADDRESS,
+        addtokenToMetaMask: deployed?.token ? addDeployedToken : addtokenToMetaMask,
+        DEPLOY_SALE,
+        saleReady: Boolean(deployed?.ico),
+        ICO_ADDRESS: icoAddress,
+        TOKEN_ADDRESS: activeToken,
         loader,
         account,
         currency,

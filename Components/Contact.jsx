@@ -1,138 +1,86 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { useForm } from "@formspree/react";
+import Reveal from "./Reveal";
 
 const Contact = () => {
-  const notifySuccess = (msg) => toast.success(msg, { duration: 2000 });
-  const notifyError = (msg) => toast.error(msg, { duration: 2000 });
-
-  const [state, handleSubmit] = useForm("xpwanoep");
   const [formValues, setFormValues] = useState({
     name: "",
     email: "",
     message: "",
   });
-  const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    if (state.succeeded) {
-      notifySuccess("Message sent successfully!");
-      setSubmitted(true);
-      setFormValues({ name: "", email: "", message: "" });
-
-      const timer = setTimeout(() => {
-        setSubmitted(false);
-      }, 4000);
-
-      return () => clearTimeout(timer);
+  const onSubmit = (event) => {
+    event.preventDefault();
+    if (!formValues.name.trim()) {
+      toast.error("Add your name.");
+      return;
     }
-  }, [state.succeeded]);
-
-  const onSubmit = (e) => {
-    e.preventDefault();
-
-    if (!formValues.email || !formValues.email.includes("@")) {
-      notifyError("Please enter a valid email address.");
+    if (!formValues.email.includes("@")) {
+      toast.error("Enter a valid email.");
+      return;
+    }
+    if (formValues.message.trim().length < 8) {
+      toast.error("Write a short message.");
       return;
     }
 
-    // Show immediate feedback even if external submission isn't completed.
-    notifySuccess("Message sent! We'll get back to you soon.");
-    setSubmitted(true);
+    setSending(true);
+    const key = "ico-contact-messages";
+    const existing = JSON.parse(localStorage.getItem(key) || "[]");
+    existing.unshift({ ...formValues, at: new Date().toISOString() });
+    localStorage.setItem(key, JSON.stringify(existing.slice(0, 20)));
     setFormValues({ name: "", email: "", message: "" });
-
-    // Let Formspree handle the actual submission too.
-    handleSubmit(e);
+    setSending(false);
+    toast.success("Message saved. We'll get back to you.");
   };
 
   return (
     <section id="contact" className="ico-contact pos-rel">
       <div className="container">
-        <div className="ico-contact__wrap">
-          <h2 className="title">Contact Us </h2>
-          <form onSubmit={onSubmit}>
-            <div className="row">
-              <div className="col-lg-6">
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  placeholder="Enter your name"
-                  value={formValues.name}
-                  onChange={(e) =>
-                    setFormValues((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                />
-              </div>
-
-              <div className="col-lg-6">
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  value={formValues.email}
-                  onChange={(e) =>
-                    setFormValues((prev) => ({ ...prev, email: e.target.value }))
-                  }
-                />
-              </div>
-
-              <div className="col-lg-12">
-                <textarea
-                  id="message"
-                  name="message"
-                  placeholder="Enter your message"
-                  value={formValues.message}
-                  onChange={(e) =>
-                    setFormValues((prev) => ({ ...prev, message: e.target.value }))
-                  }
-                ></textarea>
-              </div>
-
-              <div className="ico-contact__btn text-center mt-10">
-                <button
-                  className="thm-btn"
-                  type="submit"
-                  disabled={state.submitting}
-                >
-                  Send Message
-                </button>
-              </div>
-
-              {submitted && (
-                <div className="contact-success-message">
-                  Thanks for writing! We’ll get back to you soon.
+        <Reveal>
+          <div className="ico-contact__wrap contact-card">
+            <h2 className="title">Talk to the team</h2>
+            <p className="contact-lead">
+              Questions about the round, KYC, or the contract. Send a note and it stays on this device.
+            </p>
+            <form onSubmit={onSubmit}>
+              <div className="row">
+                <div className="col-lg-6">
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Your name"
+                    value={formValues.name}
+                    onChange={(e) => setFormValues((prev) => ({ ...prev, name: e.target.value }))}
+                  />
                 </div>
-              )}
-            </div>
-          </form>
-
-          <div className="ico-contact__shape-img">
-            <div className="shape shape--1">
-              <div data-parallax='{"y" : -50}'>
-                <img src="assets/img/shape/c_shape1.png" alt="" />
+                <div className="col-lg-6">
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email"
+                    value={formValues.email}
+                    onChange={(e) => setFormValues((prev) => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+                <div className="col-lg-12">
+                  <textarea
+                    name="message"
+                    placeholder="What do you want to know?"
+                    value={formValues.message}
+                    onChange={(e) => setFormValues((prev) => ({ ...prev, message: e.target.value }))}
+                  />
+                </div>
+                <div className="ico-contact__btn text-center mt-10">
+                  <button className="thm-btn" type="submit" disabled={sending}>
+                    {sending ? "Sending…" : "Send message"}
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="shape shape--2">
-              <div data-parallax='{"y" : 60}'>
-                <img src="assets/img/shape/c_shape2.png" alt="" />
-              </div>
-            </div>
+            </form>
           </div>
-        </div>
-      </div>
-
-      <div className="ico-contact__shape">
-        <div className="shape shape--1">
-          <img src="assets/img/shape/f_shape1.png" alt="" />
-        </div>
-        <div className="shape shape--2">
-          <img src="assets/img/shape/f_shape2.png" alt="" />
-        </div>
-        <div className="shape shape--3">
-          <img src="assets/img/shape/f_shape3.png" alt="" />
-        </div>
+        </Reveal>
       </div>
     </section>
   );

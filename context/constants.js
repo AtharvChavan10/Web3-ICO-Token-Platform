@@ -10,6 +10,9 @@ export const ERC20_ABI = erc20.abi;
 
 export const OWNER_ADDRESS = "0xb8528831179FC5906A08E61Af3249166794b81f2";
 
+export const isAdminWallet = (address) =>
+  Boolean(address) && address.toLowerCase() === OWNER_ADDRESS.toLowerCase();
+
 export const CONTRACT_ADDRESS = "0x869E22285018a0571C236606ABc5928969C657DF";
 export const CONTRACT_ABI = tokenICO.abi;
 
@@ -22,7 +25,7 @@ const networks = {
       symbol: "SepoliaETH",
       decimals: 18,
     },
-    rpcUrls: ["https://sepolia.infura.io/v3/"],
+    rpcUrls: ["https://ethereum-sepolia-rpc.publicnode.com"],
     blockExplorerUrls: ["https://sepolia.etherscan.io"],
   },
   holesky: {
@@ -132,7 +135,7 @@ const changeNetwork = async ({ networkName }) => {
 };
 
 export const handleNetworkSwitch = async () => {
-  const networkName = "holesky";
+  const networkName = "sepolia";
   await changeNetwork({ networkName });
 };
 

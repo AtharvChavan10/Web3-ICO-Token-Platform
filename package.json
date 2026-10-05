@@ -26,7 +26,8 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "eslint": "9.39.4",
-    "eslint-config-next": "16.1.6"
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.0.3",
+    "solc": "^0.8.28"
   }
 }

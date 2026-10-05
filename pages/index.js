@@ -13,11 +13,12 @@ import {
   Hero,
   Loader,
   Progress,
-  SideBar,
   Token,
   TokenInfo,
   Roadmap,
+  Team,
   KYC,
+  BackToTop,
   Popup,
   TransferToken,
   Owner,
@@ -47,6 +48,8 @@ const index = () => {
     setAccount,
     setLoader,
     addtokenToMetaMask,
+    DEPLOY_SALE,
+    saleReady,
     TOKEN_ADDRESS,
     loader,
     account,
@@ -92,24 +95,65 @@ const index = () => {
   };
 
   const openKyc = () => {
+    setKycModel(true);
+  };
+
+  const openBuy = () => {
     if (!account) {
-      toast.error("Connect your wallet to start verification");
+      toast.error("Connect your wallet to buy tokens");
+      CONNECT_WALLET();
       return;
     }
 
-    setKycModel(true);
+    if (!kycVerified) {
+      toast.error("Authenticate with KYC before you buy.");
+      setKycModel(true);
+      return;
+    }
+
+    setBuyModel(true);
   };
 
   const openAdmin = () => {
     window.location.href = "/admin";
   };
   useEffect(() => {
+    const anyModal =
+      ownerModel ||
+      buyModel ||
+      transferModel ||
+      transferCurrency ||
+      openDonate ||
+      openUpdatePrice ||
+      openUpdateAddress ||
+      kycModel;
+    document.body.style.overflow = anyModal ? "hidden" : "";
+    const onKey = (event) => {
+      if (event.key === "Escape") closeAllModals();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [
+    ownerModel,
+    buyModel,
+    transferModel,
+    transferCurrency,
+    openDonate,
+    openUpdatePrice,
+    openUpdateAddress,
+    kycModel,
+  ]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const fetchData = async () => {
       // TOKEN_ICO() may return undefined briefly while clients initialize.
       // Retry a few times so UI doesn't get stuck on "Loading...".
-      for (let attempt = 0; attempt < 8; attempt++) {
+      for (let attempt = 0; attempt < 3; attempt++) {
         const items = await TOKEN_ICO({ showLoader: false, toastOnError: false });
         if (cancelled) return;
         if (items) {
@@ -148,6 +192,8 @@ const index = () => {
         {buyModel && (
           <Popup
             setBuyModel={setBuyModel}
+            setKycModel={setKycModel}
+            kycVerified={kycVerified}
             BUY_TOKEN={BUY_TOKEN}
             currency={currency}
             detail={detail}
@@ -213,8 +259,9 @@ const index = () => {
         )}
 
         {kycModel && (
-          <KYC
+            <KYC
             account={account}
+            CONNECT_WALLET={CONNECT_WALLET}
             setKycVerified={setKycVerified}
             setKycModel={setKycModel}
           />
@@ -238,7 +285,6 @@ const index = () => {
           openTools={openTools}
         />
         {/* <Profile /> */}
-        <SideBar setOwnerModel={setOwnerModel} ownerModel={ownerModel} openTools={openTools} />
         <Hero
           setBuyModel={setBuyModel}
           account={account}
@@ -249,14 +295,23 @@ const index = () => {
           addtokenToMetaMask={addtokenToMetaMask}
           setKycModel={setKycModel}
           kycVerified={kycVerified}
+          deploySale={DEPLOY_SALE}
+          saleReady={saleReady}
         />
+        <Progress detail={detail} currency={currency} />
         <About />
         <Features />
-        <Token />
+        <Token
+          onBuy={openBuy}
+        />
         <TokenInfo detail={detail} currency={currency} />
+        <Roadmap />
+        <Brand />
+        <Team />
         <Faq />
         <Contact />
         <Footer />
+        <BackToTop />
 
         <button
           className="kyc-fixed-btn"

@@ -1,79 +1,66 @@
 import React from "react";
+import Reveal from "./Reveal";
+
+const formatAmount = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "—";
+  return number.toLocaleString(undefined, { maximumFractionDigits: 4 });
+};
+
+const SAMPLE = {
+  supply: 1000000,
+  sold: 184250,
+  left: 815750,
+  price: 0.001,
+};
 
 const TokenInfo = ({ detail, currency }) => {
+  const unit = currency || "ETH";
+  const live = Boolean(detail && !detail.offline);
+  const symbol = live ? detail?.symbol || "" : "tokens";
+  const supply = live ? Number(detail?.supply) : SAMPLE.supply;
+  const sold = live ? Number(detail?.soldTokens) : SAMPLE.sold;
+  const left = live ? Number(detail?.tokenBal) : SAMPLE.left;
+  const price = live ? Number(detail?.tokenPrice) : SAMPLE.price;
+  const market = supply * price;
+  const raised = sold * price;
+
+  const line = (value, suffix = "") => `${formatAmount(value)} ${suffix}`.trim();
+
+  const rows = [
+    ["Total supply", line(supply, symbol)],
+    ["Sold", line(sold, symbol)],
+    ["Still available", line(left, symbol)],
+    ["Token price", line(price, unit)],
+    ["Market value", line(market, unit)],
+    ["Raised", line(raised, unit)],
+  ];
+
   return (
-    <section className="token-info pos-rel pt-200 pb-150">
+    <section className="token-info pos-rel" id="sale">
       <div className="container">
-        <div className="row">
-          <div className="col-xl-8 offset-xl-4">
-            <div className="token-info__title sec-title mb-95 text-center text-xl-start">
-              <h5 className="sec-title__subtitle">ICO coindox Token</h5>
-              <h2 className="sec-title__title">
-                ICO Token <br /> Details and sale
-              </h2>
-            </div>
+        <Reveal>
+          <div className="sec-title text-center mb-70">
+            <h5 className="sec-title__subtitle">{live ? "Live sale" : "Sample round"}</h5>
+            <h2 className="sec-title__title">
+              {live ? "Numbers from the contract" : "What this round looks like"}
+            </h2>
+            {!live && (
+              <p className="sale-note">
+                The chain is quiet, so these figures match the sample bar above.
+              </p>
+            )}
           </div>
-        </div>
-
-        <div className="row">
-          <div className="col-lg-4">
-            <div className="token-info__img">
-              <img src="assets/img/token/t_info_img.png" alt="" />
-            </div>
-          </div>
-
-          <div className="col-lg-8">
-            <div className="token-info--info-wrap ul_li">
-              <ul className="token-info__list token-info--start">
-                <li>
-                  <h4>Total Supply</h4>
-                  <span>
-                    {detail?.supply} {detail?.symbol}
-                  </span>
-                </li>
-                <li>
-                  <h4>Sold Token</h4>
-                  <span>
-                    {Number(detail?.soldTokens)} {detail?.symbol}
-                  </span>
-                </li>
-                <li>
-                  <h4>Minimal Transaction</h4>
-                  <span>10 Tokens / Transaction</span>
-                </li>
-              </ul>
-              <ul className="token-info__list token-info--end">
-                <li>
-                  <h4>Token Market Value</h4>
-                  <span>
-                    {Number(detail?.supply) * Number(detail?.tokenPrice)}
-                    {currency}
-                  </span>
-                </li>
-
-                <li>
-                  <h4>Fund Raised</h4>
-                  <span>
-                    {Number(detail?.soldTokens) * Number(detail?.tokenPrice)}
-                    {currency}
-                  </span>
-                </li>
-                <li>
-                  <h4>Acceptable currencies</h4>
-                  <span>ETH, BTC, LTC</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="token-info__shape">
-        <div className="shape shape--1">
-          <img src="assets/img/shape/ti_shape.png" alt="" />
-        </div>
-        <div className="shape shape--2">
-          <img src="assets/img/shape/ti_shape2.png" alt="" />
+        </Reveal>
+        <div className="info-grid">
+          {rows.map(([label, value], index) => (
+            <Reveal key={label} delay={index * 60}>
+              <article className="info-card">
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </article>
+            </Reveal>
+          ))}
         </div>
       </div>
     </section>
